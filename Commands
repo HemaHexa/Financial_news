@@ -24,3 +24,12 @@ $env:PYTHONPATH = "$env:SPARK_HOME\python\lib\pyspark.zip;$env:SPARK_HOME\python
 python -c "import pyspark; print(pyspark.__version__); print(pyspark.__file__)"
 
 python -c "from pyspark.sql import SparkSession; print('SparkSession import successful')"
+
+
+
+
+
+
+
+
+python -c "from pyspark.sql import SparkSession; spark=SparkSession.builder.appName('BronzeTest').master('local[*]').getOrCreate(); print('Spark Version:',spark.version); print('Spark is working!'); spark.stop()"
