@@ -1,0 +1,7 @@
+$sparkCmd = Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter spark-submit.cmd -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+
+$sparkCmd
+
+$env:SPARK_HOME = Split-Path (Split-Path $sparkCmd -Parent) -Parent
+
+Test-Path "$env:SPARK_HOME\bin\spark-submit.cmd"
