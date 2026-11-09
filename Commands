@@ -4,4 +4,23 @@ $sparkCmd
 
 $env:SPARK_HOME = Split-Path (Split-Path $sparkCmd -Parent) -Parent
 
-Test-Path "$env:SPARK_HOME\bin\spark-submit.cmd"
+Test-Path "$env:SPARK_HOME\bin\spark-su
+bmit.cmd"
+
+
+
+
+
+
+
+
+
+
+
+
+$env:PYTHONPATH = "$env:SPARK_HOME\python\lib\pyspark.zip;$env:SPARK_HOME\python\lib\py4j-0.10.9.9-src.zip"
+
+
+python -c "import pyspark; print(pyspark.__version__); print(pyspark.__file__)"
+
+python -c "from pyspark.sql import SparkSession; print('SparkSession import successful')"
