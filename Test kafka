@@ -1,0 +1,29 @@
+
+from kafka import KafkaProducer
+import json
+
+producer = KafkaProducer(
+    bootstrap_servers="localhost:9092",
+    value_serializer=lambda v: json.dumps(v).encode("utf-8")
+)
+
+message = {
+    "article_id": "test001",
+    "published_at": "2026-11-10T10:00:00Z",
+    "source": "Moneycontrol",
+    "headline": "Kafka connection test",
+    "full_text": "Testing financial news pipeline.",
+    "url": "https://example.com/test",
+    "ingested_at": "2026-11-10T10:00:05Z"
+}
+
+future = producer.send("raw-news-events", value=message)
+metadata = future.get(timeout=10)
+
+print("MESSAGE SENT SUCCESSFULLY!")
+print("Topic:", metadata.topic)
+print("Partition:", metadata.partition)
+print("Offset:", metadata.offset)
+
+producer.flush()
+producer.close()
