@@ -1,0 +1,82 @@
+
+import requests
+import feedparser
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+response = requests.get(
+    URL,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+response.raise_for_status()
+
+feed = feedparser.parse(response.content)
+
+now = datetime.now(ZoneInfo("Asia/Kolkata"))
+cutoff = now - timedelta(days=15)
+
+articles = []
+
+for entry in feed.entries:
+
+    published = entry.get("published")
+
+    if not published:
+        continue
+
+    published_at = parsedate_to_datetime(published)
+    published_at = published_at.astimezone(
+        ZoneInfo("Asia/Kolkata")
+    )
+
+    articles.append({
+        "headline": entry.get("title", ""),
+        "published_at": published_at,
+        "url": entry.get("link", ""),
+        "summary": entry.get("summary", "")
+    })
+
+articles.sort(
+    key=lambda x: x["published_at"],
+    reverse=True
+)
+
+print("TOTAL RSS ARTICLES:", len(feed.entries))
+print("ARTICLES WITH DATES:", len(articles))
+
+if articles:
+
+    print("\nNEWEST ARTICLE:", articles[0]["published_at"])
+    print("OLDEST ARTICLE:", articles[-1]["published_at"])
+
+    last_15_days = [
+        article for article in articles
+        if cutoff <= article["published_at"] <= now
+    ]
+
+    reliance_articles = [
+        article for article in last_15_days
+        if "reliance industries" in (
+            article["headline"] + " " + article["summary"]
+        ).lower()
+    ]
+
+    print("\nARTICLES WITHIN 15 DAYS:", len(last_15_days))
+    print("RELIANCE MATCHES:", len(reliance_articles))
+
+    for article in reliance_articles:
+        print("\nHEADLINE:", article["headline"])
+        print("DATE:", article["published_at"])
+        print("URL:", article["url"])
+
+    print("\n========== DATE COVERAGE ==========")
+
+    if articles[-1]["published_at"] <= cutoff:
+        print("RSS reaches at least 15 days back.")
+    else:
+        print("RSS does NOT yet reach 15 days back.")
+
