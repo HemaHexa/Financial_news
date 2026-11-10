@@ -1,0 +1,285 @@
+
+import requests
+import feedparser
+import json
+import time
+import hashlib
+import logging
+import calendar
+
+from datetime import datetime, timezone, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+
+# ---------------- CONFIGURATION ----------------
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+
+CHECK_INTERVAL = 15 * 60
+
+RSS_FEEDS = {
+    "Business Standard":
+        "https://www.business-standard.com/rss/markets-106.rss",
+
+    "Moneycontrol":
+        "https://www.moneycontrol.com/rss/latestnews.xml",
+
+    "CNBC-TV18":
+        "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml"
+}
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+# ---------------- LOGGING ----------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+# ---------------- KAFKA PRODUCER ----------------
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+
+    key_serializer=lambda k: k.encode("utf-8"),
+
+    value_serializer=lambda v: json.dumps(
+        v, ensure_ascii=False
+    ).encode("utf-8"),
+
+    acks="all",
+    retries=10
+)
+
+
+# ---------------- ARTICLE ID ----------------
+
+def generate_article_id(link, title):
+
+    identity = link.strip() if link else title.strip()
+
+    return hashlib.sha256(
+        identity.encode("utf-8")
+    ).hexdigest()
+
+
+# ---------------- FETCH ONE SOURCE ----------------
+
+def fetch_news(source_name, rss_url):
+
+    logging.info("Fetching %s", source_name)
+
+    response = requests.get(
+        rss_url,
+        headers=HEADERS,
+        timeout=25
+    )
+
+    response.raise_for_status()
+
+    feed = feedparser.parse(response.content)
+
+    if feed.bozo and not feed.entries:
+        raise ValueError(
+            f"RSS parsing failed: {feed.bozo_exception}"
+        )
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+
+    articles = []
+
+    for entry in feed.entries:
+
+        title = entry.get("title", "").strip()
+        link = entry.get("link", "").strip()
+
+        if not title:
+            continue
+
+        published_struct = (
+            entry.get("published_parsed")
+            or entry.get("updated_parsed")
+        )
+
+        published_at = None
+
+        if published_struct:
+
+            published_at = datetime.fromtimestamp(
+                calendar.timegm(published_struct),
+                timezone.utc
+            ).isoformat()
+
+        description = entry.get("summary", "")
+
+        content_parts = entry.get("content", [])
+
+        full_text = (
+            content_parts[0].get("value", description)
+            if content_parts else description
+        )
+
+        article = {
+
+            "article_id": generate_article_id(link, title),
+
+            "published_at": published_at,
+
+            "source": source_name,
+
+            "headline": title,
+
+            "full_text": full_text,
+
+            "url": link,
+
+            "ingested_at": fetched_at
+
+        }
+
+        articles.append(article)
+
+    logging.info(
+        "%s returned %d articles",
+        source_name,
+        len(articles)
+    )
+
+    return articles
+
+
+# ---------------- PARALLEL FETCHING ----------------
+
+def fetch_all_news():
+
+    all_articles = []
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+
+        futures = {
+
+            executor.submit(
+                fetch_news,
+                source,
+                url
+            ): source
+
+            for source, url in RSS_FEEDS.items()
+        }
+
+        for future in as_completed(futures):
+
+            source = futures[future]
+
+            try:
+
+                articles = future.result()
+
+                all_articles.extend(articles)
+
+            except Exception as error:
+
+                logging.error(
+                    "%s failed: %s",
+                    source,
+                    error
+                )
+
+    return all_articles
+
+
+# ---------------- KAFKA PUBLISHING ----------------
+
+def publish_news(articles):
+
+    sent_count = 0
+
+    for article in articles:
+
+        try:
+
+            future = producer.send(
+                KAFKA_TOPIC,
+                key=article["article_id"],
+                value=article
+            )
+
+            metadata = future.get(timeout=30)
+
+            sent_count += 1
+
+            logging.info(
+                "Published | %s | partition=%s | offset=%s",
+                article["source"],
+                metadata.partition,
+                metadata.offset
+            )
+
+        except KafkaError as error:
+
+            logging.error(
+                "Kafka publishing failed: %s",
+                error
+            )
+
+    producer.flush()
+
+    logging.info(
+        "Published %d out of %d fetched articles",
+        sent_count,
+        len(articles)
+    )
+
+
+# ---------------- COLLECTION CYCLE ----------------
+
+def collect_news():
+
+    logging.info("Starting news collection cycle")
+
+    articles = fetch_all_news()
+
+    logging.info(
+        "Total articles fetched: %d",
+        len(articles)
+    )
+
+    publish_news(articles)
+
+    logging.info("Collection cycle completed")
+
+
+# ---------------- CONTINUOUS EXECUTION ----------------
+
+if __name__ == "__main__":
+
+    logging.info("News Producer Started")
+
+    try:
+
+        while True:
+
+            collect_news()
+
+            logging.info(
+                "Waiting %d minutes for next cycle",
+                CHECK_INTERVAL // 60
+            )
+
+            time.sleep(CHECK_INTERVAL)
+
+    except KeyboardInterrupt:
+
+        logging.info("Stopping news producer")
+
+    finally:
+
+        producer.flush()
+        producer.close()
