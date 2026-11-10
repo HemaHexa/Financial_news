@@ -1,27 +1,47 @@
 
-TARGET_COMPANIES = [
-    "Reliance Industries",
-    "Tata Consultancy Services",
-    "Infosys",
-    "HDFC Bank",
-    "ICICI Bank",
-    "Tata Steel",
-    "State Bank of India",
-    "ITC",
-    "Sun Pharmaceutical",
-    "Bharti Airtel",
-    "Adani Enterprises",
-    "Coal India",
-    "Bajaj Finance",
-    "Hindalco Industries",
-    "Oil and Natural Gas Corporation"
-]
+from pathlib import Path
+import pandas as pd
+import json
 
-NEWS_SOURCES = [
-    "Business Standard",
-    "Moneycontrol",
-    "CNBC-TV18",
-    "Mint"
-]
+BRONZE_PATH = Path("data/bronze/news_history")
 
-REFRESH_INTERVAL_MINUTES = 15
+files = sorted(BRONZE_PATH.rglob("*.parquet"))
+
+if not files:
+    print("No Parquet files found!")
+else:
+    frames = [pd.read_parquet(file) for file in files]
+    df = pd.concat(frames, ignore_index=True)
+
+    # Extract readable fields from raw JSON for display only
+    news_rows = []
+
+    for _, row in df.iterrows():
+        try:
+            news = json.loads(row["raw_json"])
+        except (json.JSONDecodeError, TypeError):
+            news = {}
+
+        news_rows.append({
+            "Source": news.get("source", ""),
+            "Headline": news.get("headline", ""),
+            "Published At": news.get("published_at", ""),
+            "URL": news.get("url", ""),
+            "Kafka Topic": row.get("topic", ""),
+            "Partition": row.get("partition", ""),
+            "Offset": row.get("offset", "")
+        })
+
+    preview = pd.DataFrame(news_rows)
+
+    print("\nTOTAL NEWS RECORDS:", len(preview))
+    print("\nBRONZE NEWS TABLE\n")
+
+    # Display a readable table
+    print(preview.head(30).to_string(index=False))
+
+    # Save complete readable preview as CSV
+    preview.to_csv("bronze_news_preview.csv", index=False)
+
+    print("\nSaved complete table to bronze_news_preview.csv")
+    
