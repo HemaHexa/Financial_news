@@ -1,0 +1,31 @@
+
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+URL = "https://www.business-standard.com/companies/news"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+response = requests.get(URL, headers=headers, timeout=20)
+soup = BeautifulSoup(response.text, "html.parser")
+
+print("PAGE:", soup.title.get_text(strip=True))
+print("\n========== ALL ARTICLE-LIKE LINKS ==========\n")
+
+seen = set()
+
+for a in soup.find_all("a", href=True):
+    href = urljoin(URL, a["href"])
+    text = a.get_text(" ", strip=True)
+
+    if "/companies/news/" in href and text:
+        if href not in seen:
+            seen.add(href)
+            print("HEADLINE:", text)
+            print("URL:", href)
+            print("-" * 80)
+
+print("\nTOTAL UNIQUE LINKS:", len(seen))
