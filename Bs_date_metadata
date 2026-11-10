@@ -1,0 +1,36 @@
+
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+response = requests.get(
+    url,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+print("========== DATE METADATA ==========")
+
+for tag in soup.find_all("meta"):
+    key = (
+        tag.get("property")
+        or tag.get("name")
+        or tag.get("itemprop")
+        or ""
+    )
+
+    value = tag.get("content", "")
+
+    if any(word in key.lower() for word in [
+        "date", "publish", "modified", "time"
+    ]):
+        print(key, ":", value)
+
+print("\n========== TIME TAGS ==========")
+
+for tag in soup.find_all("time"):
+    print(tag.attrs)
+    print(tag.get_text(" ", strip=True))
