@@ -1,0 +1,51 @@
+
+import feedparser
+from datetime import datetime, timezone, timedelta
+
+FEED_URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+feed = feedparser.parse(FEED_URL)
+
+now = datetime.now(timezone.utc)
+cutoff = now - timedelta(days=15)
+
+print("Total RSS articles:", len(feed.entries))
+
+dates = []
+reliance_articles = []
+
+for entry in feed.entries:
+
+    published = entry.get("published_parsed")
+
+    if not published:
+        continue
+
+    published_at = datetime(
+        *published[:6],
+        tzinfo=timezone.utc
+    )
+
+    dates.append(published_at)
+
+    title = entry.get("title", "")
+    summary = entry.get("summary", "")
+    combined = (title + " " + summary).lower()
+
+    if "reliance industries" in combined or "reliance" in combined:
+        reliance_articles.append(entry)
+
+    if published_at >= cutoff:
+        print("\nHeadline:", title)
+        print("Published:", published_at)
+        print("URL:", entry.get("link"))
+
+if dates:
+    print("\nOldest RSS article:", min(dates))
+    print("Newest RSS article:", max(dates))
+
+print("\nReliance articles in RSS:", len(reliance_articles))
+
+for entry in reliance_articles:
+    print("\nRELIANCE:", entry.get("title"))
+    print("URL:", entry.get("link"))
