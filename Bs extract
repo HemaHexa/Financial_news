@@ -10,6 +10,57 @@ response = requests.get(
     timeout=20
 )
 
+soup = BeautifulSoup(response.text, "html.parser")
+
+body = soup.find("div", class_="storycontent")
+
+if body:
+    print("ARTICLE BODY FOUND")
+
+    print("\n========== NESTED DIV ELEMENTS ==========")
+
+    for i, div in enumerate(body.find_all("div"), 1):
+        text = div.get_text(" ", strip=True)
+
+        if len(text) > 100:
+            print(f"\nDIV {i}")
+            print("CLASS:", div.get("class"))
+            print("LENGTH:", len(text))
+            print("PREVIEW:", text[:350])
+
+else:
+    print("Article body not found")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+response = requests.get(
+    URL,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+
 response.raise_for_status()
 
 soup = BeautifulSoup(response.text, "html.parser")
