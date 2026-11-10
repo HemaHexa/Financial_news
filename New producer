@@ -1,4 +1,718 @@
 
+import os
+import json
+import time
+import hashlib
+import logging
+import calendar
+import re
+import tempfile
+
+import requests
+import feedparser
+
+from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+
+# ==================================================
+# 1. CONFIGURATION
+# ==================================================
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+
+CHECK_INTERVAL = 15 * 60
+
+BASE_DIR = r"C:\FinancePipeline"
+
+BASELINE_DIR = os.path.join(BASE_DIR, "data", "baseline")
+BASELINE_FILE = os.path.join(
+    BASELINE_DIR, "latest_news.json"
+)
+
+RSS_FEEDS = {
+    "Business Standard":
+        "https://www.business-standard.com/rss/markets-106.rss",
+
+    "Moneycontrol":
+        "https://www.moneycontrol.com/rss/latestnews.xml",
+
+    "CNBC-TV18":
+        "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml"
+}
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 FinanceNewsPipeline/1.0"
+}
+
+
+# ==================================================
+# 2. YOUR 13 COMPANIES
+# ==================================================
+
+COMPANIES = {
+    "RELIANCE": [
+        "Reliance Industries",
+        "Reliance Industries Limited",
+        "RIL"
+    ],
+
+    "TCS": [
+        "Tata Consultancy Services"
+    ],
+
+    "INFY": [
+        "Infosys",
+        "Infosys Limited"
+    ],
+
+    "HDFCBANK": [
+        "HDFC Bank",
+        "HDFC Bank Limited"
+    ],
+
+    "ICICIBANK": [
+        "ICICI Bank",
+        "ICICI Bank Limited"
+    ],
+
+    "TATASTEEL": [
+        "Tata Steel",
+        "Tata Steel Limited"
+    ],
+
+    "SBIN": [
+        "State Bank of India",
+        "SBI"
+    ],
+
+    "ITC": [
+        "ITC Limited",
+        "ITC Ltd"
+    ],
+
+    "SUNPHARMA": [
+        "Sun Pharmaceutical",
+        "Sun Pharma",
+        "Sun Pharmaceutical Industries"
+    ],
+
+    "BHARTIARTL": [
+        "Bharti Airtel",
+        "Airtel"
+    ],
+
+    "ADANIENT": [
+        "Adani Enterprises",
+        "Adani Enterprises Limited"
+    ],
+
+    "COALINDIA": [
+        "Coal India",
+        "Coal India Limited"
+    ],
+
+    "BAJFINANCE": [
+        "Bajaj Finance",
+        "Bajaj Finance Limited"
+    ]
+}
+
+
+# ==================================================
+# 3. LOGGING
+# ==================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+
+# ==================================================
+# 4. KAFKA PRODUCER
+# ==================================================
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+
+    key_serializer=lambda k: k.encode("utf-8"),
+
+    value_serializer=lambda v: json.dumps(
+        v, ensure_ascii=False
+    ).encode("utf-8"),
+
+    acks="all",
+    retries=10,
+    request_timeout_ms=30000
+)
+
+
+# ==================================================
+# 5. COMPANY MATCHING
+# ==================================================
+
+def find_companies(text):
+
+    matched = []
+
+    text = text.lower()
+
+    for ticker, keywords in COMPANIES.items():
+
+        for keyword in keywords:
+
+            pattern = (
+                r"(?<!\w)"
+                + re.escape(keyword.lower())
+                + r"(?!\w)"
+            )
+
+            if re.search(pattern, text):
+
+                matched.append(ticker)
+                break
+
+    return matched
+
+
+# ==================================================
+# 6. ARTICLE ID
+# ==================================================
+
+def generate_article_id(link, title):
+
+    identity = link.strip() if link else title.strip()
+
+    return hashlib.sha256(
+        identity.encode("utf-8")
+    ).hexdigest()
+
+
+# ==================================================
+# 7. FETCH NEWS FROM ONE SOURCE
+# ==================================================
+
+def fetch_one_source(source_name, rss_url):
+
+    logging.info("Fetching %s", source_name)
+
+    response = requests.get(
+        rss_url,
+        headers=HEADERS,
+        timeout=25
+    )
+
+    response.raise_for_status()
+
+    feed = feedparser.parse(response.content)
+
+    if feed.bozo and not feed.entries:
+
+        raise ValueError(
+            f"RSS parsing failed: {feed.bozo_exception}"
+        )
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+
+    articles = []
+
+    for entry in feed.entries:
+
+        title = entry.get("title", "").strip()
+        link = entry.get("link", "").strip()
+
+        description = entry.get("summary", "")
+
+        content_parts = entry.get("content", [])
+
+        full_text = (
+            content_parts[0].get("value", description)
+            if content_parts else description
+        )
+
+        searchable_text = (
+            title + " " + description + " " + full_text
+        )
+
+        matched_companies = find_companies(searchable_text)
+
+        # Only the 13 selected companies
+        if not matched_companies:
+            continue
+
+        published_struct = (
+            entry.get("published_parsed")
+            or entry.get("updated_parsed")
+        )
+
+        published_at = None
+
+        if published_struct:
+
+            published_at = datetime.fromtimestamp(
+                calendar.timegm(published_struct),
+                timezone.utc
+            ).isoformat()
+
+        article = {
+
+            "article_id": generate_article_id(link, title),
+
+            "published_at": published_at,
+
+            "source": source_name,
+
+            "headline": title,
+
+            "full_text": full_text,
+
+            "url": link,
+
+            "ingested_at": fetched_at,
+
+            "matched_companies": matched_companies
+
+        }
+
+        articles.append(article)
+
+    logging.info(
+        "%s: %d relevant articles",
+        source_name,
+        len(articles)
+    )
+
+    return articles
+
+
+# ==================================================
+# 8. FETCH ALL THREE SOURCES IN PARALLEL
+# ==================================================
+
+def fetch_all_sources():
+
+    all_articles = []
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+
+        futures = {
+
+            executor.submit(
+                fetch_one_source,
+                source,
+                url
+            ): source
+
+            for source, url in RSS_FEEDS.items()
+        }
+
+        for future in as_completed(futures):
+
+            source = futures[future]
+
+            try:
+
+                articles = future.result()
+
+                all_articles.extend(articles)
+
+            except Exception as error:
+
+                logging.error(
+                    "%s fetch failed: %s",
+                    source,
+                    error
+                )
+
+    return all_articles
+
+
+# ==================================================
+# 9. PUBLISH RAW NEWS TO KAFKA
+# ==================================================
+
+def publish_to_kafka(articles):
+
+    success_count = 0
+
+    for article in articles:
+
+        try:
+
+            future = producer.send(
+                KAFKA_TOPIC,
+                key=article["article_id"],
+                value=article
+            )
+
+            metadata = future.get(timeout=30)
+
+            success_count += 1
+
+            logging.info(
+                "Kafka published | %s | partition=%s | offset=%s",
+                article["source"],
+                metadata.partition,
+                metadata.offset
+            )
+
+        except KafkaError as error:
+
+            logging.error(
+                "Kafka publishing failed: %s",
+                error
+            )
+
+    producer.flush()
+
+    logging.info(
+        "Kafka publishing completed: %d/%d",
+        success_count,
+        len(articles)
+    )
+
+
+# ==================================================
+# 10. LOAD PREVIOUS BASELINE
+# ==================================================
+
+def load_baseline():
+
+    os.makedirs(BASELINE_DIR, exist_ok=True)
+
+    if not os.path.exists(BASELINE_FILE):
+
+        return {}
+
+    try:
+
+        with open(
+            BASELINE_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            return json.load(file)
+
+    except (json.JSONDecodeError, OSError) as error:
+
+        logging.error("Could not load baseline: %s", error)
+
+        raise
+
+
+# ==================================================
+# 11. SAVE BASELINE
+# ==================================================
+
+def save_baseline(baseline):
+
+    os.makedirs(BASELINE_DIR, exist_ok=True)
+
+    fd, temporary_file = tempfile.mkstemp(
+        dir=BASELINE_DIR,
+        suffix=".tmp"
+    )
+
+    try:
+
+        with os.fdopen(
+            fd, "w", encoding="utf-8"
+        ) as file:
+
+            json.dump(
+                baseline,
+                file,
+                indent=4,
+                ensure_ascii=False
+            )
+
+        os.replace(
+            temporary_file,
+            BASELINE_FILE
+        )
+
+    except Exception:
+
+        if os.path.exists(temporary_file):
+            os.remove(temporary_file)
+
+        raise
+
+
+# ==================================================
+# 12. GET LATEST ARTICLE FOR EACH COMPANY
+# ==================================================
+
+def get_article_time(article):
+
+    value = (
+        article.get("published_at")
+        or article.get("ingested_at")
+    )
+
+    if not value:
+        return datetime.min.replace(tzinfo=timezone.utc)
+
+    try:
+
+        parsed = datetime.fromisoformat(
+            value.replace("Z", "+00:00")
+        )
+
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+
+        return parsed.astimezone(timezone.utc)
+
+    except ValueError:
+
+        return datetime.min.replace(tzinfo=timezone.utc)
+
+
+def find_latest_articles(articles):
+
+    latest = {}
+
+    for ticker in COMPANIES:
+
+        company_articles = [
+
+            article for article in articles
+
+            if ticker in article["matched_companies"]
+
+        ]
+
+        if company_articles:
+
+            latest[ticker] = max(
+                company_articles,
+                key=get_article_time
+            )
+
+    return latest
+
+
+# ==================================================
+# 13. INITIAL BASELINE OR BASELINE UPDATE
+# ==================================================
+
+def update_baseline(baseline, latest_articles):
+
+    updated_companies = []
+
+    for ticker, article in latest_articles.items():
+
+        previous = baseline.get(ticker)
+
+        if previous is None:
+
+            baseline[ticker] = article
+
+            updated_companies.append(ticker)
+
+            continue
+
+        if (
+            get_article_time(article)
+            > get_article_time(previous)
+        ):
+
+            baseline[ticker] = article
+
+            updated_companies.append(ticker)
+
+    return updated_companies
+
+
+# ==================================================
+# 14. DISPLAY LATEST NEWS FOR ALL 13 COMPANIES
+# ==================================================
+
+def display_baseline(baseline, cycle_name):
+
+    print("\n" + "=" * 75)
+
+    print(f"       {cycle_name}")
+
+    print("=" * 75)
+
+    for ticker in COMPANIES:
+
+        article = baseline.get(ticker)
+
+        print(f"\n{ticker}")
+
+        if article:
+
+            print("Latest news :", article["headline"])
+
+            print("Source      :", article["source"])
+
+            print("Published   :", article["published_at"])
+
+            print("URL         :", article["url"])
+
+        else:
+
+            print("Latest news : No matching news available")
+
+    print("\n" + "=" * 75)
+
+    print("BASELINE FILE:", BASELINE_FILE)
+
+    print("=" * 75)
+
+
+# ==================================================
+# 15. ONE COMPLETE COLLECTION CYCLE
+# ==================================================
+
+def collection_cycle(baseline, cycle_number):
+
+    print("\nStarting collection cycle:", cycle_number)
+
+    # Fetch three sources concurrently
+    articles = fetch_all_sources()
+
+    print("\nTotal relevant articles fetched:", len(articles))
+
+    # Publish raw relevant articles to Kafka
+    publish_to_kafka(articles)
+
+    # Find latest article per company
+    latest_articles = find_latest_articles(articles)
+
+    # Update existing baseline only with newer news
+    updated = update_baseline(
+        baseline,
+        latest_articles
+    )
+
+    # Persist updated baseline
+    save_baseline(baseline)
+
+    # Display all 13 companies
+    display_baseline(
+        baseline,
+        f"NEWS SUMMARY - CYCLE {cycle_number}"
+    )
+
+    print("\nCompanies with updated baseline:", updated)
+
+    print("Collection cycle completed.")
+
+
+# ==================================================
+# 16. MAIN EXECUTION
+# ==================================================
+
+def main():
+
+    print("\nINDIAN COMPANY NEWS MONITORING STARTED")
+
+    try:
+
+        baseline = load_baseline()
+
+        # INITIAL BASELINE
+        if not baseline:
+
+            print("\nCreating initial news baseline...")
+
+            initial_articles = fetch_all_sources()
+
+            print(
+                "\nInitial relevant articles:",
+                len(initial_articles)
+            )
+
+            publish_to_kafka(initial_articles)
+
+            latest_articles = find_latest_articles(
+                initial_articles
+            )
+
+            update_baseline(
+                baseline,
+                latest_articles
+            )
+
+            save_baseline(baseline)
+
+            display_baseline(
+                baseline,
+                "INITIAL NEWS BASELINE"
+            )
+
+        else:
+
+            print("\nPrevious baseline found.")
+
+            display_baseline(
+                baseline,
+                "LOADED EXISTING NEWS BASELINE"
+            )
+
+        # CONTINUOUS 15-MINUTE MONITORING
+        cycle_number = 1
+
+        while True:
+
+            print(
+                f"\nWaiting {CHECK_INTERVAL // 60} minutes "
+                "for next collection..."
+            )
+
+            time.sleep(CHECK_INTERVAL)
+
+            collection_cycle(
+                baseline,
+                cycle_number
+            )
+
+            cycle_number += 1
+
+    except KeyboardInterrupt:
+
+        print("\nNews producer stopped by user.")
+
+    finally:
+
+        producer.flush()
+        producer.close()
+
+
+if __name__ == "__main__":
+
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import requests
 import feedparser
 import json
