@@ -1,0 +1,653 @@
+(venv) PS C:\FinancePipeline\test> python bs_reliance_15day_scraper.py
+===========================================================================
+BUSINESS STANDARD - RELIANCE 15-DAY SCRAPER
+===========================================================================
+Current IST: 2026-11-10T16:58:15.485206+05:30
+15-day cutoff: 2026-10-26T16:58:15.485206+05:30
+Sections: Companies News + Markets News
+
+Checking section: https://www.business-standard.com/companies/news
+Article links found: 31
+
+Checking section: https://www.business-standard.com/markets/news
+Article links found: 31
+
+TOTAL UNIQUE ARTICLE LINKS: 51
+
+========== SCRAPING ARTICLES ==========
+
+[1/51] 
+---------------------------------------------------------------------------
+CHECKING: Amazon eyes AI agents for 2 mn Indian sellers, targets 15 mn businesses
+URL: https://www.business-standard.com/companies/news/amazon-india-ai-agents-sellers-small-businesses-2030-126111000429_1.html
+HEADLINE: Amazon eyes AI agents for 2 mn Indian sellers, targets 15 mn businesses
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 15:24:34+05:30
+BODY LENGTH: 5558
+BODY PREVIEW: Amazon plans to introduce artificial intelligence (AI) agents that can identify business opportunities and act on behalf of sellers, as the e-commerce major looks to deepen its engagement with nearly 2 million Indian sellers and position itself as a long-term growth partner for small businesses. “Th
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[2/51] 
+---------------------------------------------------------------------------
+CHECKING: PepsiCo to cut over 1,000 jobs amid sluggish sales in North American market
+URL: https://www.business-standard.com/world-news/pepsico-to-cut-over-1-000-jobs-amid-sluggish-sales-in-north-american-market-126111000389_1.html
+HEADLINE: PepsiCo to cut over 1,000 jobs amid sluggish sales in North American market
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 14:46:12+05:30
+BODY LENGTH: 2410
+BODY PREVIEW: PepsiCo plans to cut about 1,000 jobs across its North American food and beverage business over the coming week as the company looks to streamline operations and revive growth in its home market. The job cuts are part of an organisational restructuring aimed at simplifying the company's structure an
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[3/51] 
+---------------------------------------------------------------------------
+CHECKING: 3 workers die of asphyxiation at Tata's iPhone parts factory in Tamil Nadu
+URL: https://www.business-standard.com/companies/news/3-workers-die-of-asphyxiation-at-tata-s-iphone-parts-factory-in-tamil-nadu-126111000129_1.html
+HEADLINE: 3 workers die of asphyxiation at Tata's iPhone parts factory in Tamil Nadu
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 10:32:49+05:30
+BODY LENGTH: 2323
+BODY PREVIEW: Three contract workers have died at a Tata Electronics factory that makes parts for Apple iPhones in India's ​southern Tamil Nadu state, the latest supply chain incident affecting the ​US company in its most critical manufacturing base after China. The deaths, which occurred late ‌on Monday, will be
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[4/51] 
+---------------------------------------------------------------------------
+CHECKING: Blackstone set to become key investor in IIFL Finance with 15% stake
+URL: https://www.business-standard.com/companies/news/blackstone-set-to-become-key-investor-in-iifl-finance-with-15-stake-126111000088_1.html
+HEADLINE: Blackstone set to become key investor in IIFL Finance with 15% stake
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 08:33:11+05:30
+BODY LENGTH: 3005
+BODY PREVIEW: US alternative investment management company Blackstone is set to invest around ₹5,000 crore for a 15 per cent stake in IIFL Finance , according to a report in The Economic Times . The proposed investment is reportedly part of a larger capital infusion of more than ₹6,200 crore into the financial se
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[5/51] 
+---------------------------------------------------------------------------
+CHECKING: Huang's grip on Nvidia may pose challenge to board's probe into his affair
+URL: https://www.business-standard.com/companies/news/huang-s-grip-on-nvidia-may-pose-challenge-to-board-s-probe-into-his-affair-126110901614_1.html
+HEADLINE: Huang's grip on Nvidia may pose challenge to board's probe into his affair
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:46:52+05:30
+BODY LENGTH: 7536
+BODY PREVIEW: Over the past four years, Jensen Huang has become the maestro of the artificial intelligence (AI) boom and its most essential billionaire executive. Nvidia, the company he cofounded in 1993, controls an estimated 90 per cent of the market for the computer chips used in the big artificial intelligenc
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[6/51] 
+---------------------------------------------------------------------------
+CHECKING: IndiQube plans to pilot data centres in office spaces amid client demand
+URL: https://www.business-standard.com/companies/news/indiqube-plans-to-pilot-data-centres-in-office-spaces-amid-client-demand-126110901014_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: IndiQube plans to pilot data centres in office spaces amid client demand
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:34:29+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[7/51] 
+---------------------------------------------------------------------------
+CHECKING: WTi Cabs targets ₹5K-7K cr annual revenue in 5 years: CEO Ashok Vashist
+URL: https://www.business-standard.com/companies/news/wti-cabs-targets-5k-7k-cr-annual-revenue-in-5-years-ceo-ashok-vashist-126110901118_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: WTi Cabs targets ₹5K-7K cr annual revenue in 5 years: CEO Ashok Vashist
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:30:57+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[8/51] 
+---------------------------------------------------------------------------
+CHECKING: SiriusXM names Tubi chief Anjali Sud as CEO, effective January 1, 2027
+URL: https://www.business-standard.com/companies/news/siriusxm-names-tubi-chief-anjali-sud-as-ceo-effective-january-1-2027-126110901540_1.html
+HEADLINE: SiriusXM names Tubi chief Anjali Sud as CEO, effective January 1, 2027
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 22:17:51+05:30
+BODY LENGTH: 596
+BODY PREVIEW: SiriusXM on Monday named board member Anjali Sud, the head of Fox-owned streaming service Tubi, as its chief executive officer (CEO), turning to a digital media veteran to help reinvigorate growth as listeners shift away from satellite radio. Sud, who will take over as CEO effective January 1, 2027,
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[9/51] 
+---------------------------------------------------------------------------
+CHECKING: Mphasis eyes double-digit growth despite uncertain macros, AI woes
+URL: https://www.business-standard.com/companies/quarterly-results/mphasis-eyes-double-digit-fy27-growth-on-strong-deal-pipeline-ai-demand-126110901021_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Mphasis eyes double-digit growth despite uncertain macros, AI woes
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 18:47:00+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[10/51] 
+---------------------------------------------------------------------------
+CHECKING: Quest Global acquires US-based Tests Assured to boost wearables expertise
+URL: https://www.business-standard.com/companies/news/quest-global-acquires-us-based-tests-assured-to-boost-wearables-expertise-126110901048_1.html
+HEADLINE: Quest Global acquires US-based Tests Assured to boost wearables expertise
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 19:10:21+05:30
+BODY LENGTH: 2397
+BODY PREVIEW: Quest Global Engineering Services on Monday announced the acquisition of Tests Assured, a US-based company specialising in quality assurance and technology-enabled testing for immersive products, smart devices, wearables and related hardware and software platforms. With this acquisition, Quest Globa
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[11/51] 
+---------------------------------------------------------------------------
+CHECKING: Prestige Estates acquires Noida-based Allure Developers for ₹523.76 crore
+URL: https://www.business-standard.com/companies/news/prestige-estates-acquires-noida-based-allure-developers-for-523-76-crore-126110900977_1.html
+HEADLINE: Prestige Estates acquires Noida-based Allure Developers for ₹523.76 crore
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 18:23:34+05:30
+BODY LENGTH: 1087
+BODY PREVIEW: Bengaluru-based real estate developer Prestige Estates Projects Ltd has acquired a 100 per cent stake in Allure Developers Private Limited, which is developing a residential project in Sector 150, Noida, as it looks to expand its presence in the National Capital Region (NCR). Prestige Estates entere
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[12/51] 
+---------------------------------------------------------------------------
+CHECKING: Reliance may struggle to repeat cola disruption in biscuits: Britannia CEO
+URL: https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html
+HEADLINE: Reliance may struggle to repeat cola disruption in biscuits: Britannia CEO
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 18:10:19+05:30
+BODY LENGTH: 2450
+BODY PREVIEW: Britannia Industries believes that Reliance Industries will find it difficult to replicate the price-disruption it caused in the cola market in its just-entered core biscuits industry given the different pricing dynamics of the segment. "As far as Reliance is concerned, we have to study what they ha
+RELIANCE MATCH: True
+SUCCESS: Reliance article extracted
+
+[13/51] 
+---------------------------------------------------------------------------
+CHECKING: Tenneco India explores diversifying beyond auto sector, eyes M&A plans
+URL: https://www.business-standard.com/companies/news/tenneco-india-explores-diversifying-beyond-auto-sector-eyes-m-a-plans-126110900918_1.html
+HEADLINE: Tenneco India explores diversifying beyond auto sector, eyes M&A plans
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 17:46:14+05:30
+BODY LENGTH: 3619
+BODY PREVIEW: Tenneco Clean Air India is exploring opportunities for acquisitions as the auto component maker looks to broaden and diversify its business beyond the automotive sector, according to a senior company official. The company is considering options in industrial markets, including rail, aerospace and de
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[14/51] 
+---------------------------------------------------------------------------
+CHECKING: Sarvam appoints ex-Google Cloud India MD Sashikumar Sreedharan as president
+URL: https://www.business-standard.com/companies/news/sarvam-names-google-cloud-india-head-sashikumar-sreedharan-as-president-chief-business-officer-126110900600_1.html
+HEADLINE: Sarvam appoints ex-Google Cloud India MD Sashikumar Sreedharan as president
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 15:44:53+05:30
+BODY LENGTH: 1734
+BODY PREVIEW: Indian AI company Sarvam on Monday announced that Sashikumar Sreedharan, most recently Managing Director for India at Google Cloud, has joined as President and Chief Business Officer. He will also join the company's board. Sreedharan will run Sarvam's business across enterprises and government, and 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[15/51] 
+---------------------------------------------------------------------------
+CHECKING: Jindal, Arvedi Group submit binding bids for Italy's former Ilva steelworks
+URL: https://www.business-standard.com/companies/news/jindal-arvedi-group-submit-binding-bids-for-italy-s-former-ilva-steelworks-126110900624_1.html
+HEADLINE: Jindal, Arvedi Group submit binding bids for Italy's former Ilva steelworks
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 15:43:43+05:30
+BODY LENGTH: 1079
+BODY PREVIEW: India's Jindal and Italian steelmaker Arvedi Group have submitted binding bids for Italy's former Ilva steelworks, the special commissioners ‌overseeing the company said ​on Monday, ​as the government seeks a ​buyer for the troubled industrial group. The commissioners will now assess whether the off
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[16/51] 
+---------------------------------------------------------------------------
+CHECKING: MakeMyTrip's India subsidiary receives Sebi approval to float IPO
+URL: https://www.business-standard.com/companies/news/makemytrip-s-india-subsidiary-receives-sebi-approval-to-float-ipo-126110900451_1.html
+HEADLINE: MakeMyTrip's India subsidiary receives Sebi approval to float IPO
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 13:28:07+05:30
+BODY LENGTH: 1852
+BODY PREVIEW: Nasdaq-listed travel booking platform MakeMyTrip's India subsidiary has received Sebi's approval to launch an initial public offering (IPO), according to an update available on the markets regulator's website on Monday. MakeMyTrip (India) Ltd (MMT India) had filed draft papers with Sebi in July thro
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[17/51] 
+---------------------------------------------------------------------------
+CHECKING: Employees in India value work breaks, but few make time for them
+URL: https://www.business-standard.com/companies/news/employees-in-india-value-work-breaks-but-few-make-time-for-them-126110900455_1.html
+HEADLINE: Employees in India value work breaks, but few make time for them
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 13:19:00+05:30
+BODY LENGTH: 4262
+BODY PREVIEW: Indian employees recognise that taking breaks, eating well and staying active can help them feel better and work more productively. Yet, increasingly demanding work schedules make it harder to build these habits into the working day, according to a study by food services company Compass Group India.
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[18/51] 
+---------------------------------------------------------------------------
+CHECKING: L&T bags 'significant' order from Noida Metro for Aqua Line extension
+URL: https://www.business-standard.com/companies/news/l-t-bags-significant-order-from-noida-metro-for-aqua-line-extension-126110900306_1.html
+HEADLINE: L&T bags 'significant' order from Noida Metro for Aqua Line extension
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 11:40:45+05:30
+BODY LENGTH: 1282
+BODY PREVIEW: Infrastructure major Larsen & Toubro (L&T) on Monday said its Heavy Civil Infrastructure business vertical has secured a “significant” order worth up to ₹2,500 crore from Noida Metro Rail Corporation Ltd for the construction of the Noida Metro Aqua Line extension project. L&T, a $32 billion Indian m
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[19/51] 
+---------------------------------------------------------------------------
+CHECKING: Morepen launches first US prescription generic, eyes further filings
+URL: https://www.business-standard.com/companies/news/morepen-laboratories-launches-first-us-prescription-generic-eyes-further-filings-126110900170_1.html
+HEADLINE: Morepen launches first US prescription generic, eyes further filings
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 09:41:00+05:30
+BODY LENGTH: 1869
+BODY PREVIEW: Indian pharmaceutical and healthcare company Morepen Laboratories on Monday announced that it has launched its first prescription generic product, Desloratadine Tablets USP, 5 mg, in the US market, marking its entry into the country's prescription generics segment. Morepen said in an exchange filing
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[20/51] 
+---------------------------------------------------------------------------
+CHECKING: TaMo keeps M&M in its rearview as EV sales drive lead in PV market race
+URL: https://www.business-standard.com/industry/auto/tamo-keeps-m-m-in-its-rearview-as-ev-sales-drive-lead-in-pv-market-race-126110800512_1.html
+HEADLINE: TaMo keeps M&M in its rearview as EV sales drive lead in PV market race
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-08 22:47:04+05:30
+BODY LENGTH: 7509
+BODY PREVIEW: The battle for the second position in India’s passenger vehicle (PV) market is intensifying between Tata Motors and Mahindra & Mahindra (M&M), with electric vehicles (EVs) emerging as an important differentiator and both automobile (auto) manufacturers scaling up production to meet demand. Tata has 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[21/51] 
+---------------------------------------------------------------------------
+CHECKING: Stock Market Holiday
+URL: https://www.business-standard.com/markets/news/stock-market-holiday-today-nse-bse-to-remain-closed-for-diwali-balipratipada-126111000071_1.html?1794277078
+HEADLINE: Stock market holiday: NSE, BSE to remain closed for Diwali-Balipratipada
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 07:47:22+05:30
+BODY LENGTH: 3108
+BODY PREVIEW: Stock market holiday today: The Indian stock markets will remain closed on Tuesday, November 10, on account of Diwali-Balipratipada. Trading on both the National Stock Exchange ( NSE ) and the BSE will remain suspended for the day across the equity, equity derivatives, and securities lending and bor
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[22/51] 
+---------------------------------------------------------------------------
+CHECKING: Boeing Layoffs 2026
+URL: https://www.business-standard.com/world-news/boeing-to-cut-5-of-commercial-aircraft-workforce-amid-production-delay-126111000092_1.html?1794280825
+HEADLINE: Boeing to cut 5% of commercial aircraft workforce amid production delay
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 08:43:36+05:30
+BODY LENGTH: 2167
+BODY PREVIEW: Boeing plans to cut around 5 per cent of its Commercial Airplanes workforce as the US aircraft manufacturer struggles to increase production and pushes back key recovery targets, reported Reuters . The reductions will be carried out through a combination of attrition and involuntary layoffs, accordi
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[23/51] 
+---------------------------------------------------------------------------
+CHECKING: Blackstone-IIFL Finance Deal
+URL: https://www.business-standard.com/economy/news/weekly-policy-watch-india-retail-inflation-forex-reserves-deposit-growth-126110900126_1.html?1794196439
+HEADLINE: Weekly policy watch: Retail inflation, forex reserves and deposits in focus
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 09:18:45+05:30
+BODY LENGTH: 2443
+BODY PREVIEW: India’s economic calendar this week will focus on retail inflation, foreign exchange reserves and banking sector trends. Retail inflation data on November 12 The government will release retail inflation data for October on November 12. India’s retail inflation rose to 5.54 per cent in September from
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[24/51] 
+---------------------------------------------------------------------------
+CHECKING: Delhi Air Quality
+URL: https://www.business-standard.com/india-news/delhi-s-aqi-remains-very-poor-pusa-records-highest-reading-at-392-126111000141_1.html?1794285198
+HEADLINE: Delhi's AQI remains 'very poor'; Pusa records highest reading at 392
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 09:44:22+05:30
+BODY LENGTH: 2260
+BODY PREVIEW: Delhi’s air quality continued to remain in the ‘very poor’ category two days after Diwali, with the national capital recording a city-level Air Quality Index (AQI) of 304 at 8 am on Tuesday, according to real-time data from the Central Pollution Control Board (CPCB). Morning readings showed pollutio
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[25/51] 
+---------------------------------------------------------------------------
+CHECKING: Bank Holidays in November 2026
+URL: https://www.business-standard.com/industry/banking/bank-holidays-in-november-2026-check-state-wise-list-of-closures-in-india-nc-126103000855_1.html
+HEADLINE: Bank holidays in November 2026: Check state-wise list of closures in India
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-10-30 15:04:20+05:30
+BODY LENGTH: 3164
+BODY PREVIEW: Bank branches across India will observe different holidays in November 2026, depending on regional festivals and local occasions. Customers planning branch visits should check their state-wise holiday calendar, as a bank holiday in one state does not necessarily mean closures nationwide. According t
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[26/51] 
+---------------------------------------------------------------------------
+CHECKING: Anthropic IPO
+URL: https://www.business-standard.com/world-news/anthropic-retracts-69-3-bn-ipo-figures-says-revised-details-to-follow-126111000143_1.html?1794285018
+HEADLINE: Anthropic retracts $69.3 bn IPO figures, says revised details to follow
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 09:47:52+05:30
+BODY LENGTH: 2010
+BODY PREVIEW: Anthropic, the artificial intelligence (AI) startup behind Claude, has retracted details of its proposed blockbuster initial public offering ( IPO ) after sending them to bankers, saying the pricing information was inaccurate and that revised figures would follow, according to a Reuters report. The 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[27/51] 
+---------------------------------------------------------------------------
+CHECKING: IBPS RRB PO Admit Card 2026
+URL: https://www.business-standard.com/education/news/ibps-rrb-po-admit-card-2026-released-at-ibps-in-check-important-details-nc-126111000179_1.html?1794286504
+HEADLINE: IBPS RRB PO Admit Card 2026 released at ibps.in; check important details
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 10:24:58+05:30
+BODY LENGTH: 2178
+BODY PREVIEW: The IBPS RRB PO 2026 Admit Card has been released by the Institute of Banking Personnel Selection. Candidates who have applied for 4,256 Officer Scale I posts across Regional Rural Banks can download the prelims admit card at the official website. The IBPS RRB PO Prelims Exam 2026 is planned to be c
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[28/51] 
+---------------------------------------------------------------------------
+CHECKING: Qantas Layoffs
+URL: https://www.business-standard.com/world-news/qantas-airways-to-cut-850-australian-jobs-outsource-work-to-india-126111000230_1.html?1794290103
+HEADLINE: Qantas Airways to cut 850 Australian jobs, outsource work to India
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 11:17:36+05:30
+BODY LENGTH: 2171
+BODY PREVIEW: Australian airline Qantas Airways is reportedly planning to cut around 850 local jobs and outsource them to consulting major Accenture, with most of the roles expected to move to India. The airline on Tuesday said it had signed a multi-year agreement with professional services firm Accenture to “mod
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[29/51] 
+---------------------------------------------------------------------------
+CHECKING: Ramayana Box Office Collection Day 5
+URL: https://www.business-standard.com/entertainment/ranbir-s-ramayana-box-office-collection-day-5-crosses-500-cr-milestone-nc-126111000196_1.html?1794291850
+HEADLINE: Ranbir's Ramayana box office collection day 5 crosses 660 crore globally
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 11:53:03+05:30
+BODY LENGTH: 2506
+BODY PREVIEW: Ranbir Kapoor 's Ramayana: Part 1 has swiftly crossed yet another significant box-office landmark, bringing its global collection to close to Rs 664 crore within just 5 days of its release. The film, directed by Nitesh Tiwari, has maintained its strong run after Diwali, establishing a new benchmark 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[30/51] 
+---------------------------------------------------------------------------
+CHECKING: Temple Device Controversy
+URL: https://www.business-standard.com/india-news/what-is-the-controversy-over-deepinder-goyal-s-85-000-temple-wearable-126111000259_1.html?1794298592
+HEADLINE: What is the controversy over Deepinder Goyal's ₹85,000 Temple wearable?
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 13:41:52+05:30
+BODY LENGTH: 4307
+BODY PREVIEW: Eternal founder Deepinder Goyal has defended his ₹85,000 wearable device, Temple, amid questions raised by doctors over the scientific validity of its measurements of brain blood flow and other physiological parameters. Goyal maintained that Temple was a fitness and artificial intelligence (AI) prod
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[31/51] 
+---------------------------------------------------------------------------
+CHECKING: Jensen Huang's Net Worth
+URL: https://www.business-standard.com/world-news/jensen-huang-wealth-drops-billionaire-rankings-nvidia-probe-126111000349_1.html?1794300622
+HEADLINE: Jensen Huang's fortune takes $7.4 billion hit as Nvidia probes affair
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 14:09:42+05:30
+BODY LENGTH: 3208
+BODY PREVIEW: Nvidia CEO Jensen Huang’s net worth fell by an estimated $7.4 billion on Monday after the chipmaker’s shares slid on reports that the company is probing his affair with a business executive of Singapore-based firm Megaspeed, who allegedly has links to Chinese intelligence, Forbes reported. The decli
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[32/51] 
+---------------------------------------------------------------------------
+CHECKING: Individual ownership in NSE-listed firms hits record 19.5% in Q2FY27
+URL: https://www.business-standard.com/markets/news/individual-ownership-in-nse-listed-firms-hits-record-19-5-in-q2fy27-126111000550_1.html
+HEADLINE: Individual ownership in NSE-listed firms hits record 19.5% in Q2FY27
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 16:48:54+05:30
+BODY LENGTH: 2291
+BODY PREVIEW: Combined individual investors' equity ownership in NSE-listed companies rose to a record 19.5 per cent at the end of the September quarter, as households continued to add to their exposure through direct stock holdings and mutual funds, according to data from the exchange’s India Ownership Tracker. 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[33/51] 
+---------------------------------------------------------------------------
+CHECKING: FPIs turn net buyers in November, pump ₹53,739 crore into Indian equities
+URL: https://www.business-standard.com/markets/news/fpis-turn-net-buyers-in-november-pump-53-739-crore-into-indian-equities-126111000477_1.html
+HEADLINE: FPIs turn net buyers in November, pump ₹53,739 crore into Indian equities
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 16:47:00+05:30
+BODY LENGTH: 1937
+BODY PREVIEW: Foreign investors turned net buyers of Indian equities in November, infusing Rs 53,739 crore in the first nine days after two consecutive months of outflows, driven by the AI-led sell-off in global markets, strong domestic earnings growth and attractive large-cap valuations. The latest investment fo
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[34/51] 
+---------------------------------------------------------------------------
+CHECKING: Apollo Hospitals stock supported by expansion, value unlocking triggers
+URL: https://www.business-standard.com/markets/news/apollo-hospitals-q2-fy27-results-capacity-expansion-healthco-stock-outlook-126111000308_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Apollo Hospitals stock supported by expansion, value unlocking triggers
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 13:07:30+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[35/51] 
+---------------------------------------------------------------------------
+CHECKING: World stocks rise as oil slips below $90 on hopes of US-Iran peace talks
+URL: https://www.business-standard.com/markets/news/world-stocks-rise-as-oil-slips-below-90-on-hopes-of-us-iran-peace-talks-126111000408_1.html
+HEADLINE: World stocks rise as oil slips below $90 on hopes of US-Iran peace talks
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 15:38:00+05:30
+BODY LENGTH: 3943
+BODY PREVIEW: World stocks rose on Tuesday as a drop in oil prices after US President Donald Trump said he plans to hold off on new military strikes against Iran lifted sentiment ahead of US inflation data that could ​sway the near-term interest rate outlook. Brent crude futures fell over 2 per cent, dipping belo
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[36/51] 
+---------------------------------------------------------------------------
+CHECKING: Bullish signals! GIFT Nifty jumps 1% as crude oil prices test $90/bbl
+URL: https://www.business-standard.com/markets/news/bullish-signals-gift-nifty-jumps-1-as-crude-oil-prices-test-90-bbl-126111000417_1.html
+HEADLINE: Bullish signals! GIFT Nifty jumps 1% as crude oil prices test $90/bbl
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 15:13:40+05:30
+BODY LENGTH: 2707
+BODY PREVIEW: While the Indian stock market remained closed for trading on Tuesday on account of Diwali Balipratipada , a gap-up start for the bulls cannot be ruled out tomorrow (Wednesday) once trading resumes, as oil prices slide sharply and test the $90 per barrel mark. GIFT Nifty futures were up 270 points or
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[37/51] 
+---------------------------------------------------------------------------
+CHECKING: Asian stocks rise amid falling oil prices on hopes of US-Iran talks
+URL: https://www.business-standard.com/markets/news/asian-stocks-rise-amid-falling-oil-prices-on-hopes-of-us-iran-talks-126111000080_1.html
+HEADLINE: Asian stocks rise amid falling oil prices on hopes of US-Iran talks
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 09:11:31+05:30
+BODY LENGTH: 4216
+BODY PREVIEW: Asian stocks rose on Tuesday as a drop in oil prices after US President Donald Trump said he plans to hold off on new military strikes against Iran lifted sentiment ahead of US inflation data that could sway the near-term interest rate ​outlook. Brent crude futures were hovering at their lowest leve
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[38/51] 
+---------------------------------------------------------------------------
+CHECKING: Stock market holiday: NSE, BSE to remain closed for Diwali-Balipratipada
+URL: https://www.business-standard.com/markets/news/stock-market-holiday-today-nse-bse-to-remain-closed-for-diwali-balipratipada-126111000071_1.html
+HEADLINE: Stock market holiday: NSE, BSE to remain closed for Diwali-Balipratipada
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-10 07:47:22+05:30
+BODY LENGTH: 3108
+BODY PREVIEW: Stock market holiday today: The Indian stock markets will remain closed on Tuesday, November 10, on account of Diwali-Balipratipada. Trading on both the National Stock Exchange ( NSE ) and the BSE will remain suspended for the day across the equity, equity derivatives, and securities lending and bor
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[39/51] 
+---------------------------------------------------------------------------
+CHECKING: Debt drives overseas fundraising by Indian companies to 7-year high
+URL: https://www.business-standard.com/markets/news/debt-drives-overseas-fundraising-by-indian-companies-to-7-year-high-126110901601_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Debt drives overseas fundraising by Indian companies to 7-year high
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:39:18+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[40/51] 
+---------------------------------------------------------------------------
+CHECKING: Strong Q2, future prospects keep Street bullish on Tata Steel stock
+URL: https://www.business-standard.com/markets/news/strong-q2-future-prospects-keep-street-bullish-on-tata-steel-stock-126110901188_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Strong Q2, future prospects keep Street bullish on Tata Steel stock
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 19:53:23+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[41/51] 
+---------------------------------------------------------------------------
+CHECKING: NSE deploys liquid cooling for AI infra, plans over 80 GPUs this quarter
+URL: https://www.business-standard.com/technology/artificial-intelligence/nse-deploys-liquid-cooling-for-ai-infra-plans-over-80-gpus-this-quarter-126110900780_1.html
+HEADLINE: NSE deploys liquid cooling for AI infra, plans over 80 GPUs this quarter
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 17:09:26+05:30
+BODY LENGTH: 2247
+BODY PREVIEW: The National Stock Exchange (NSE) on Monday announced that it has deployed direct-to-chip liquid cooling technology to support its expanding artificial intelligence (AI) workloads, with plans to scale graphics processing units (GPU) capacity beyond 80 this quarter and up to 224 in the future. The de
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[42/51] 
+---------------------------------------------------------------------------
+CHECKING: IFSCA may let researchers in GIFT City to launch model portfolios
+URL: https://www.business-standard.com/markets/news/ifsca-proposes-model-portfolios-in-gift-city-by-research-entities-126110900766_1.html
+HEADLINE: IFSCA may let researchers in GIFT City to launch model portfolios
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 17:00:22+05:30
+BODY LENGTH: 2438
+BODY PREVIEW: The International Financial Services Centres Authority (IFSCA) has proposed allowing research entities in GIFT City to offer model portfolios, subject to disclosure and operational requirements, as it seeks to expand the scope of research products available to investors. In a consultation paper issu
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[43/51] 
+---------------------------------------------------------------------------
+CHECKING: Jewellery stocks outshine Nifty as festive gold demand fuels optimism
+URL: https://www.business-standard.com/markets/news/jewellery-stocks-outshine-nifty-as-festive-gold-demand-fuels-optimism-126110901183_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Jewellery stocks outshine Nifty as festive gold demand fuels optimism
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:32:56+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[44/51] 
+---------------------------------------------------------------------------
+CHECKING: Brokerages feel sequential squeeze as closing auction session, curbs hit Q2
+URL: https://www.business-standard.com/markets/news/brokerages-feel-sequential-squeeze-as-closing-auction-session-curbs-hit-q2-126110901092_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Brokerages feel sequential squeeze as closing auction session, curbs hit Q2
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 23:29:44+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[45/51] 
+---------------------------------------------------------------------------
+CHECKING: Nvidia's shares slide as chip giant probes CEO Huang over spy claims
+URL: https://www.business-standard.com/markets/news/nvidia-s-shares-slide-as-chip-giant-probes-ceo-huang-over-spy-claims-126110900547_1.html
+HEADLINE: Nvidia's shares slide as chip giant probes CEO Huang over spy claims
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 14:42:40+05:30
+BODY LENGTH: 5529
+BODY PREVIEW: Nvidia shares fell sharply on Monday after an internal investigation into whether CEO Jensen Huang had been targeted by a foreign intelligence effort put his future at the AI chipmaker under scrutiny. The internal probe ??followed a media report that Huang had a close relationship with a Chinese bus
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[46/51] 
+---------------------------------------------------------------------------
+CHECKING: Scaling up of projects to drive gains for Divi's Labs amid strong Q2 show
+URL: https://www.business-standard.com/markets/news/scaling-up-of-projects-to-drive-gains-for-divi-s-labs-amid-strong-q2-show-126110900986_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Scaling up of projects to drive gains for Divi's Labs amid strong Q2 show
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 18:27:27+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[47/51] 
+---------------------------------------------------------------------------
+CHECKING: HSBC upgrades Indian equities to 'overweight', cuts China to 'neutral'
+URL: https://www.business-standard.com/markets/news/hsbc-upgrades-indian-equities-to-overweight-cuts-china-to-neutral-126110901244_1.html
+HEADLINE: HSBC upgrades Indian equities to 'overweight', cuts China to 'neutral'
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 20:37:33+05:30
+BODY LENGTH: 1809
+BODY PREVIEW: Foreign brokerage HSBC on Monday upgraded Indian equities to "overweight" after the recent market corrections. The brokerage also downgraded Chinese stocks to "neutral", according to a report. "Following a multi-year valuation re-set and significant underperformance to EM (emerging markets), we now 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[48/51] 
+---------------------------------------------------------------------------
+CHECKING: How to choose a foreign broker? Check the plumbing, not just the app
+URL: https://www.business-standard.com/markets/news/how-to-choose-a-foreign-broker-check-the-plumbing-not-just-the-app-126110901189_1.html
+HEADLINE: How to choose a foreign broker? Check the plumbing, not just the app
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 19:54:39+05:30
+BODY LENGTH: 6935
+BODY PREVIEW: Buying a United States (US) stock from India now takes just a few taps. The harder part is knowing who sits behind those taps, who regulates them, and what happens when something goes wrong. A recent episode shows how many layers can sit between an investor and their shares. Several investors of Bor
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[49/51] 
+---------------------------------------------------------------------------
+CHECKING: Stock Market Close: Sensex ends volatile trade 107 pts higher, Nifty at 25,045; PSU Bank index up 3%
+URL: https://www.business-standard.com/markets/news/stock-market-live-november-9-nse-bse-sensex-today-nifty50-gift-nifty-crude-oil-prices-update-126110900058_1.html
+ARTICLE BODY: div.storycontent not found
+HEADLINE: Stock Market Close: Sensex ends volatile trade 107 pts higher, Nifty at 25,045; PSU Bank index up 3%
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 07:53:41+05:30
+BODY LENGTH: 0
+BODY PREVIEW: [EMPTY]
+RELIANCE MATCH: False
+REJECTED: Article body is missing or too short
+
+[50/51] 
+---------------------------------------------------------------------------
+CHECKING: Pharmacy retail stock Entero Healthcare zooms 33% in 1 week; hits new high
+URL: https://www.business-standard.com/markets/news/pharmacy-retail-stock-entero-healthcare-zooms-33-in-1-week-hits-new-high-126110900567_1.html
+HEADLINE: Pharmacy retail stock Entero Healthcare zooms 33% in 1 week; hits new high
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 15:11:41+05:30
+BODY LENGTH: 4150
+BODY PREVIEW: Entero Healthcare Solutions share price movement Entero Healthcare Solutions share price moved higher by 4 per cent to ₹2,095.30, also its new high on the BSE in Monday’s intraday trade in an otherwise range-bound market. The stock price of the pharmacy retail company bounced back 7 per cent from it
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+[51/51] 
+---------------------------------------------------------------------------
+CHECKING: Data Patterns shares zoom 9% post Q2 show, nearly double from Jan lows
+URL: https://www.business-standard.com/markets/news/data-patterns-shares-zoom-9-post-q2-show-nearly-double-from-jan-lows-126110900563_1.html
+HEADLINE: Data Patterns shares zoom 9% post Q2 show, nearly double from Jan lows
+DATE SOURCE: metadata:{'name': 'article:published_time'}
+PUBLISHED AT: 2026-11-09 15:09:55+05:30
+BODY LENGTH: 2408
+BODY PREVIEW: Data Patterns share price rallied over 9 per cent on Monday, snapping its three-day losing run, as investors focussed on the company's strong order book and projection of a strong second half of the fiscal year even though the Q2 PAT nearly halved. The defence stock posted its earnings on Saturday. 
+RELIANCE MATCH: False
+REJECTED: Not a Reliance-related article
+
+===========================================================================
+SCRAPING COMPLETED
+===========================================================================
+Companies News + Markets News links: 51
+Reliance articles in 15 days: 1
+Saved file: C:\FinancePipeline\test\reliance_15day_articles.json
+
+ARTICLE 1
+Headline: Reliance may struggle to repeat cola disruption in biscuits: Britannia CEO
+Published: 2026-11-09T18:10:19+05:30
+URL: https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html
+Body characters: 2450
+(venv) PS C:\FinancePipeline\test> 
