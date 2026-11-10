@@ -1,3 +1,113 @@
+import requests
+import feedparser
+import json
+import time
+import hashlib
+
+from datetime import datetime, timezone
+from kafka import KafkaProducer
+
+# Configuration
+RSS_URL = "https://www.business-standard.com/rss/markets-106.rss"
+KAFKA_TOPIC = "raw-news-events"
+KAFKA_SERVER = "localhost:9092"
+
+# Kafka connection
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    key_serializer=lambda k: k.encode("utf-8")
+)
+
+seen_ids = set()
+
+def collect_news():
+    try:
+        print("Checking Business Standard RSS...")
+
+        response = requests.get(
+            RSS_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=20
+        )
+        response.raise_for_status()
+
+        feed = feedparser.parse(response.content)
+
+        if feed.bozo:
+            print("RSS parsing warning:", feed.bozo_exception)
+
+        for entry in feed.entries:
+
+            title = entry.get("title", "")
+            link = entry.get("link", "")
+            raw_description = entry.get("summary", "")
+            published = entry.get("published", "")
+
+            news_id = hashlib.sha256(
+                (link or title).encode("utf-8")
+            ).hexdigest()
+
+            if news_id in seen_ids:
+                continue
+
+            news_event = {
+                "id": news_id,
+                "source": "Business Standard",
+                "timestamp": datetime.now(
+                    timezone.utc
+                ).isoformat(),
+                "published": published,
+                "title": title,
+                "link": link,
+                "raw_description": raw_description,
+                "content": raw_description
+            }
+
+            producer.send(
+                KAFKA_TOPIC,
+                key=news_id,
+                value=news_event
+            )
+
+            seen_ids.add(news_id)
+
+            print("Sent:", title)
+
+        producer.flush()
+        print("News ingestion completed.")
+
+    except Exception as e:
+        print("News ingestion error:", e)
+
+
+if __name__ == "__main__":
+
+    print("Indian Financial News Producer Started")
+
+    while True:
+        collect_news()
+        print("Waiting 60 seconds for new news...")
+        time.sleep(60)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import feedparser
 import json
