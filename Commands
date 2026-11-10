@@ -1,4 +1,4 @@
-$sparkCmd = Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter spark-submit.cmd -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+hu$sparkCmd = Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter spark-submit.cmd -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
 
 $sparkCmd
 
@@ -32,4 +32,14 @@ python -c "from pyspark.sql import SparkSession; print('SparkSession import succ
 
 
 
-python -c "from pyspark.sql import SparkSession; spark=SparkSession.builder.appName('BronzeTest').master('local[*]').getOrCreate(); print('Spark Version:',spark.version); print('Spark is working!'); spark.stop()"
+python -c "from pyspark.sql import SparkSession; spark=SparkSession.builder.appName('BronzeTest').master('local[*]').getOrCreate(); print('Spark Version:',spark.version); print('Spark is working!'); spark.stop( 
+
+
+)"
+
+
+
+
+
+
+python -c "import requests; u='https://www.business-standard.com/rss/markets-106.rss'; r=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=20); print('STATUS:',r.status_code); print('TYPE:',r.headers.get('content-type')); print(r.text[:1000])"
