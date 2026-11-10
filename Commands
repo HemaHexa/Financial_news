@@ -1,3 +1,8 @@
+python -c "import pyarrow.parquet as pq, glob; files=glob.glob('data/bronze/news_history/*.parquet'); print('Files:', len(files)); t=pq.read_table(files[-1]); print('Columns:', t.column_names); print('Rows:', t.num_rows); print(t.to_pandas().head(5).to_string(index=False))"
+
+
+
+
 python -c "import requests,feedparser; urls={'Business Standard':'https://www.business-standard.com/rss/markets-106.rss','Moneycontrol':'https://www.moneycontrol.com/rss/latestnews.xml','CNBC-TV18':'https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml'}; [(lambda r,n: print(n,'HTTP:',r.status_code,'Entries:',len(feedparser.parse(r.content).entries)))(requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=20),n) for n,u in urls.items()]"
 
 
