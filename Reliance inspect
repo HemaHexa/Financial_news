@@ -1,0 +1,36 @@
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+response = requests.get(URL, headers=headers, timeout=20)
+soup = BeautifulSoup(response.text, "html.parser")
+
+print("ARTICLE TAGS:", len(soup.find_all("article")))
+print("H1 TAGS:", len(soup.find_all("h1")))
+
+print("\n========== PARAGRAPH INSPECTION ==========")
+
+for i, p in enumerate(soup.find_all("p")[:30], 1):
+    text = p.get_text(" ", strip=True)
+
+    if text:
+        print(f"\n{i}. {text[:300]}")
+
+print("\n========== POSSIBLE ARTICLE CONTAINERS ==========")
+
+for tag in soup.find_all(["div", "section"]):
+    text = tag.get_text(" ", strip=True)
+
+    if len(text) > 500 and len(text) < 15000:
+        classes = tag.get("class", [])
+        print("\nTAG:", tag.name)
+        print("CLASS:", classes)
+        print("TEXT LENGTH:", len(text))
+        print("PREVIEW:", text[:250])
+
