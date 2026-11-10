@@ -1,209 +1,828 @@
-"""RSS-only producer: four publishers, baseline on startup, then every 15 minutes.
-No web scraping, company matching, or deduplication. Failed Kafka sends are spooled.
+
 """
+RSS-only Financial News Producer
+---------------------------------
+Sources:
+1. Business Standard
+2. Moneycontrol
+3. CNBC-TV18
+4. Mint
+
+Behavior:
+- Initial baseline collection on startup.
+- Collect only RSS entries matching the 15 target companies.
+- Publish matching articles to Kafka.
+- Refresh every 15 minutes.
+- No web scraping or API keys.
+- Preserve original RSS data.
+- Buffer failed Kafka messages locally.
+"""
+
 import hashlib
+import html
 import json
 import logging
 import os
+import re
 import signal
+import sys
 import time
+
 from datetime import datetime, timezone
 from pathlib import Path
 
 import truststore
 truststore.inject_into_ssl()
+
 import feedparser
 import requests
+
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
+
+# --------------------------------------------------
+# PROJECT CONFIGURATION
+# --------------------------------------------------
+
 ROOT = Path(__file__).resolve().parents[1]
-import sys
+
 sys.path.insert(0, str(ROOT))
+
 from config.companies import REFRESH_INTERVAL_MINUTES
 
-BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-TOPIC = os.getenv("KAFKA_TOPIC", "raw-news-events")
+
+BOOTSTRAP = os.getenv(
+    "KAFKA_BOOTSTRAP_SERVERS",
+    "localhost:9092"
+)
+
+TOPIC = os.getenv(
+    "KAFKA_TOPIC",
+    "raw-news-events"
+)
+
 INTERVAL = REFRESH_INTERVAL_MINUTES * 60
-TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
-SPOOL = ROOT / "data" / "spool" / "failed_news.jsonl"
+
+TIMEOUT = int(
+    os.getenv("REQUEST_TIMEOUT", "30")
+)
+
+SPOOL = (
+    ROOT
+    / "data"
+    / "spool"
+    / "failed_news.jsonl"
+)
+
+
+# --------------------------------------------------
+# FOUR RSS SOURCES
+# --------------------------------------------------
 
 FEEDS = {
-    "Business Standard": "https://www.business-standard.com/rss/latest.rss",
-    "Moneycontrol": "https://www.moneycontrol.com/rss/latestnews.xml",
-    "CNBC-TV18": "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
-    "Mint": "https://www.livemint.com/rss/markets",
-}
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"}
+    "Business Standard":
+        "https://www.business-standard.com/rss/latest.rss",
 
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper(),
-                    format="%(asctime)s | %(levelname)s | %(message)s")
+    "Moneycontrol":
+        "https://www.moneycontrol.com/rss/latestnews.xml",
+
+    "CNBC-TV18":
+        "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
+
+    "Mint":
+        "https://www.livemint.com/rss/markets",
+}
+
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 "
+        "(Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "Chrome/120.0 Safari/537.36"
+    )
+}
+
+
+# --------------------------------------------------
+# 15 TARGET COMPANIES AND RSS SEARCH ALIASES
+# --------------------------------------------------
+
+COMPANY_ALIASES = {
+    "Reliance Industries": [
+        "Reliance Industries",
+        "Reliance Industries Limited",
+        "Reliance",
+        "RIL",
+    ],
+
+    "Tata Consultancy Services": [
+        "Tata Consultancy Services",
+        "TCS",
+    ],
+
+    "Infosys": [
+        "Infosys",
+        "Infosys Limited",
+    ],
+
+    "HDFC Bank": [
+        "HDFC Bank",
+        "HDFC Bank Limited",
+    ],
+
+    "ICICI Bank": [
+        "ICICI Bank",
+        "ICICI Bank Limited",
+    ],
+
+    "Tata Steel": [
+        "Tata Steel",
+        "Tata Steel Limited",
+    ],
+
+    "State Bank of India": [
+        "State Bank of India",
+        "SBI",
+    ],
+
+    "ITC": [
+        "ITC Limited",
+        "ITC",
+    ],
+
+    "Sun Pharmaceutical": [
+        "Sun Pharmaceutical",
+        "Sun Pharma",
+        "Sun Pharmaceutical Industries",
+    ],
+
+    "Bharti Airtel": [
+        "Bharti Airtel",
+        "Airtel",
+    ],
+
+    "Adani Enterprises": [
+        "Adani Enterprises",
+        "Adani Enterprises Limited",
+    ],
+
+    "Coal India": [
+        "Coal India",
+        "Coal India Limited",
+    ],
+
+    "Bajaj Finance": [
+        "Bajaj Finance",
+        "Bajaj Finance Limited",
+    ],
+
+    "Hindalco Industries": [
+        "Hindalco Industries",
+        "Hindalco",
+    ],
+
+    "Oil and Natural Gas Corporation": [
+        "Oil and Natural Gas Corporation",
+        "Oil & Natural Gas Corporation",
+        "ONGC",
+    ],
+}
+
+
+# --------------------------------------------------
+# LOGGING
+# --------------------------------------------------
+
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
 log = logging.getLogger("news-producer")
+
+
+# --------------------------------------------------
+# HTTP SESSION
+# --------------------------------------------------
+
 session = requests.Session()
+
 session.headers.update(HEADERS)
+
 stopping = False
 
 
+# --------------------------------------------------
+# STOP HANDLER
+# --------------------------------------------------
+
 def stop_handler(_sig, _frame):
+
     global stopping
+
     stopping = True
-    log.info("Stop requested; finishing current cycle.")
 
-
-def json_safe(value):
-    if isinstance(value, dict):
-        return {str(k): json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [json_safe(v) for v in value]
-    if hasattr(value, "tm_year"):
-        try:
-            return time.strftime("%Y-%m-%dT%H:%M:%SZ", value)
-        except Exception:
-            return str(value)
-    if value is None or isinstance(value, (str, int, float, bool)):
-        return value
-    return str(value)
-
-
-def fetch_feed(source, url):
-    log.info("Fetching %s", source)
-    try:
-        response = session.get(url, timeout=TIMEOUT)
-        response.raise_for_status()
-        parsed = feedparser.parse(response.content)
-        if parsed.bozo:
-            log.warning("%s RSS parse warning: %s", source, parsed.bozo_exception)
-
-        records = []
-        for entry in parsed.entries:
-            headline = entry.get("title", "").strip()
-            link = entry.get("link", "").strip()
-            if not headline or not link:
-                continue
-            article_id = hashlib.sha256(link.encode("utf-8")).hexdigest()
-            records.append({
-                "article_id": article_id,
-                "source": source,
-                "headline": headline,
-                "url": link,
-                "published_at": entry.get("published", entry.get("updated", "")),
-                "description": entry.get("summary", ""),
-                "raw_content": json_safe(entry.get("content", [])),
-                "raw_rss_entry": json_safe(dict(entry)),
-                "ingested_at": datetime.now(timezone.utc).isoformat(),
-            })
-        log.info("%s: fetched %d RSS entries", source, len(records))
-        return records
-    except requests.RequestException:
-        log.exception("%s RSS request failed", source)
-    except Exception:
-        log.exception("Unexpected feed error for %s", source)
-    return []
-
-
-def fetch_all():
-    all_records = []
-    for source, url in FEEDS.items():
-        all_records.extend(fetch_feed(source, url))
-    log.info("Fetched %d records across all feeds", len(all_records))
-    return all_records
-
-
-def create_producer():
-    return KafkaProducer(
-        bootstrap_servers=BOOTSTRAP,
-        key_serializer=lambda k: k.encode("utf-8") if k else None,
-        value_serializer=lambda v: json.dumps(v, ensure_ascii=False, default=str).encode("utf-8"),
-        acks="all",
-        retries=10,
-        max_in_flight_requests_per_connection=1,
-        request_timeout_ms=30000,
-        delivery_timeout_ms=120000,
+    log.info(
+        "Stop requested. Finishing current cycle."
     )
 
 
-def spool_record(record):
-    SPOOL.parent.mkdir(parents=True, exist_ok=True)
-    with SPOOL.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+# --------------------------------------------------
+# RSS TEXT NORMALIZATION
+# --------------------------------------------------
 
+def clean_rss_text(value):
+    """
+    Convert RSS HTML/text into searchable plain text.
+    This does not fetch or scrape article webpages.
+    """
+
+    if not value:
+        return ""
+
+    if isinstance(value, list):
+
+        return " ".join(
+            clean_rss_text(item)
+            for item in value
+        )
+
+    if isinstance(value, dict):
+
+        return clean_rss_text(
+            value.get("value", "")
+        )
+
+    text = str(value)
+
+    text = re.sub(
+        r"<[^>]+>",
+        " ",
+        text
+    )
+
+    text = html.unescape(text)
+
+    return " ".join(text.split()).casefold()
+
+
+# --------------------------------------------------
+# COMPANY MATCHING
+# --------------------------------------------------
+
+def find_matching_companies(entry):
+    """
+    Check only RSS-provided fields:
+    - headline
+    - description/summary
+    - RSS content
+
+    Returns matching company names.
+    """
+
+    headline = entry.get("title", "")
+
+    description = entry.get("summary", "")
+
+    content = entry.get("content", [])
+
+    searchable_text = clean_rss_text(
+        headline
+    ) + " " + clean_rss_text(
+        description
+    ) + " " + clean_rss_text(
+        content
+    )
+
+    matched = []
+
+    for company, aliases in COMPANY_ALIASES.items():
+
+        for alias in aliases:
+
+            pattern = (
+                r"(?<![a-z0-9])"
+                + re.escape(alias.casefold())
+                + r"(?![a-z0-9])"
+            )
+
+            if re.search(pattern, searchable_text):
+
+                matched.append(company)
+
+                break
+
+    return matched
+
+
+# --------------------------------------------------
+# JSON SAFE CONVERSION
+# --------------------------------------------------
+
+def json_safe(value):
+
+    if isinstance(value, dict):
+
+        return {
+            str(k): json_safe(v)
+            for k, v in value.items()
+        }
+
+    if isinstance(value, (list, tuple)):
+
+        return [
+            json_safe(v)
+            for v in value
+        ]
+
+    if hasattr(value, "tm_year"):
+
+        try:
+
+            return time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ",
+                value
+            )
+
+        except Exception:
+
+            return str(value)
+
+    if value is None or isinstance(
+        value,
+        (str, int, float, bool)
+    ):
+
+        return value
+
+    return str(value)
+
+
+# --------------------------------------------------
+# FETCH ONE RSS SOURCE
+# --------------------------------------------------
+
+def fetch_feed(source, url):
+
+    log.info(
+        "Fetching RSS: %s",
+        source
+    )
+
+    try:
+
+        response = session.get(
+            url,
+            timeout=TIMEOUT
+        )
+
+        response.raise_for_status()
+
+        parsed = feedparser.parse(
+            response.content
+        )
+
+        if parsed.bozo:
+
+            log.warning(
+                "%s RSS parse warning: %s",
+                source,
+                parsed.bozo_exception
+            )
+
+        records = []
+
+        skipped = 0
+
+        for entry in parsed.entries:
+
+            headline = entry.get(
+                "title",
+                ""
+            ).strip()
+
+            link = entry.get(
+                "link",
+                ""
+            ).strip()
+
+            if not headline or not link:
+
+                skipped += 1
+
+                continue
+
+            # Match against the 15 companies.
+
+            matched_companies = find_matching_companies(
+                entry
+            )
+
+            # Ignore unrelated RSS entries.
+
+            if not matched_companies:
+
+                skipped += 1
+
+                continue
+
+            article_id = hashlib.sha256(
+                link.encode("utf-8")
+            ).hexdigest()
+
+            record = {
+
+                "article_id": article_id,
+
+                "source": source,
+
+                "headline": headline,
+
+                "url": link,
+
+                "published_at": entry.get(
+                    "published",
+                    entry.get("updated", "")
+                ),
+
+                "description": entry.get(
+                    "summary",
+                    ""
+                ),
+
+                "raw_content": json_safe(
+                    entry.get("content", [])
+                ),
+
+                "raw_rss_entry": json_safe(
+                    dict(entry)
+                ),
+
+                "ingested_at": datetime.now(
+                    timezone.utc
+                ).isoformat(),
+
+            }
+
+            records.append(record)
+
+        log.info(
+            "%s | Matching articles: %d | Unrelated skipped: %d",
+            source,
+            len(records),
+            skipped
+        )
+
+        return records
+
+    except requests.RequestException:
+
+        log.exception(
+            "%s RSS request failed",
+            source
+        )
+
+    except Exception:
+
+        log.exception(
+            "Unexpected RSS error for %s",
+            source
+        )
+
+    return []
+
+
+# --------------------------------------------------
+# FETCH ALL FOUR SOURCES
+# --------------------------------------------------
+
+def fetch_all():
+
+    all_records = []
+
+    for source, url in FEEDS.items():
+
+        records = fetch_feed(
+            source,
+            url
+        )
+
+        all_records.extend(records)
+
+    log.info(
+        "Total matching articles from all feeds: %d",
+        len(all_records)
+    )
+
+    return all_records
+
+
+# --------------------------------------------------
+# KAFKA PRODUCER
+# --------------------------------------------------
+
+def create_producer():
+
+    return KafkaProducer(
+
+        bootstrap_servers=BOOTSTRAP,
+
+        key_serializer=lambda k:
+            k.encode("utf-8") if k else None,
+
+        value_serializer=lambda v:
+            json.dumps(
+                v,
+                ensure_ascii=False,
+                default=str
+            ).encode("utf-8"),
+
+        acks="all",
+
+        retries=10,
+
+        max_in_flight_requests_per_connection=1,
+
+        request_timeout_ms=30000,
+
+        delivery_timeout_ms=120000,
+
+    )
+
+
+# --------------------------------------------------
+# LOCAL FAILURE SPOOL
+# --------------------------------------------------
+
+def spool_record(record):
+
+    SPOOL.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with SPOOL.open(
+        "a",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            json.dumps(
+                record,
+                ensure_ascii=False,
+                default=str
+            ) + "\n"
+        )
+
+
+# --------------------------------------------------
+# REPLAY FAILED RECORDS
+# --------------------------------------------------
 
 def replay_spool(producer):
-    if not SPOOL.exists():
-        return
-    temp = SPOOL.with_suffix(".tmp")
-    replayed = 0
-    remaining = 0
-    with SPOOL.open("r", encoding="utf-8") as src, temp.open("w", encoding="utf-8") as pending:
-        for line in src:
-            if not line.strip():
-                continue
-            try:
-                item = json.loads(line)
-                producer.send(TOPIC, key=item.get("article_id"), value=item).get(timeout=60)
-                replayed += 1
-            except Exception:
-                log.exception("Spool replay failed; keeping record")
-                pending.write(line)
-                remaining += 1
-    if remaining:
-        temp.replace(SPOOL)
-    else:
-        temp.unlink(missing_ok=True)
-        SPOOL.unlink(missing_ok=True)
-    log.info("Spool replay: %d replayed, %d pending", replayed, remaining)
 
+    if not SPOOL.exists():
+
+        return
+
+    temp = SPOOL.with_suffix(".tmp")
+
+    replayed = 0
+
+    remaining = 0
+
+    with SPOOL.open(
+        "r",
+        encoding="utf-8"
+    ) as src, temp.open(
+        "w",
+        encoding="utf-8"
+    ) as pending:
+
+        for line in src:
+
+            if not line.strip():
+
+                continue
+
+            try:
+
+                item = json.loads(line)
+
+                producer.send(
+                    TOPIC,
+                    key=item.get("article_id"),
+                    value=item
+                ).get(timeout=60)
+
+                replayed += 1
+
+            except Exception:
+
+                log.exception(
+                    "Spool replay failed"
+                )
+
+                pending.write(line)
+
+                remaining += 1
+
+    if remaining:
+
+        temp.replace(SPOOL)
+
+    else:
+
+        temp.unlink(missing_ok=True)
+
+        SPOOL.unlink(missing_ok=True)
+
+    log.info(
+        "Spool replay | Replayed=%d | Pending=%d",
+        replayed,
+        remaining
+    )
+
+
+# --------------------------------------------------
+# PUBLISH MATCHING RECORDS
+# --------------------------------------------------
 
 def publish_records(producer, records):
-    published = failed = 0
-    for record in records:
-        try:
-            producer.send(TOPIC, key=record["article_id"], value=record).get(timeout=60)
-            published += 1
-        except Exception:
-            log.exception("Kafka publish failed; buffering locally")
-            spool_record(record)
-            failed += 1
-    producer.flush()
-    log.info("Published=%d | Buffered=%d", published, failed)
 
+    published = 0
+
+    failed = 0
+
+    for record in records:
+
+        try:
+
+            producer.send(
+
+                TOPIC,
+
+                key=record["article_id"],
+
+                value=record
+
+            ).get(timeout=60)
+
+            published += 1
+
+        except Exception:
+
+            log.exception(
+                "Kafka publish failed; buffering locally"
+            )
+
+            spool_record(record)
+
+            failed += 1
+
+    producer.flush()
+
+    log.info(
+        "Kafka publishing completed | Published=%d | Buffered=%d",
+        published,
+        failed
+    )
+
+
+# --------------------------------------------------
+# COLLECTION CYCLE
+# --------------------------------------------------
 
 def run_cycle(producer, name):
-    log.info("===== %s =====", name)
-    replay_spool(producer)
-    records = fetch_all()
-    publish_records(producer, records)
 
+    log.info(
+        "========== %s ==========",
+        name
+    )
+
+    replay_spool(producer)
+
+    records = fetch_all()
+
+    publish_records(
+        producer,
+        records
+    )
+
+    log.info(
+        "%s completed.",
+        name
+    )
+
+
+# --------------------------------------------------
+# MAIN
+# --------------------------------------------------
 
 def main():
+
     global stopping
-    signal.signal(signal.SIGINT, stop_handler)
+
+    signal.signal(
+        signal.SIGINT,
+        stop_handler
+    )
+
     if hasattr(signal, "SIGTERM"):
-        signal.signal(signal.SIGTERM, stop_handler)
+
+        signal.signal(
+            signal.SIGTERM,
+            stop_handler
+        )
 
     producer = None
+
     try:
-        log.info("RSS-only producer starting; Kafka=%s topic=%s", BOOTSTRAP, TOPIC)
-        log.info("Initial baseline starts now; refresh interval=%d minutes", REFRESH_INTERVAL_MINUTES)
+
+        log.info(
+            "RSS-only producer starting."
+        )
+
+        log.info(
+            "Kafka: %s | Topic: %s",
+            BOOTSTRAP,
+            TOPIC
+        )
+
+        log.info(
+            "Target companies: %d",
+            len(COMPANY_ALIASES)
+        )
+
+        log.info(
+            "Publishers: %d",
+            len(FEEDS)
+        )
+
+        log.info(
+            "Refresh interval: %d minutes",
+            REFRESH_INTERVAL_MINUTES
+        )
+
         producer = create_producer()
-        run_cycle(producer, "INITIAL BASELINE")
+
+        # Initial baseline.
+
+        run_cycle(
+            producer,
+            "INITIAL BASELINE"
+        )
+
+        # Refresh every 15 minutes.
+
         while not stopping:
+
+            log.info(
+                "Next RSS refresh in %d minutes.",
+                REFRESH_INTERVAL_MINUTES
+            )
+
             for _ in range(INTERVAL):
+
                 if stopping:
+
                     break
+
                 time.sleep(1)
+
             if not stopping:
-                run_cycle(producer, "15-MINUTE REFRESH")
+
+                run_cycle(
+                    producer,
+                    "15-MINUTE REFRESH"
+                )
+
     except KafkaError:
-        log.exception("Kafka error")
+
+        log.exception(
+            "Kafka error"
+        )
+
         raise
+
     finally:
+
         if producer:
+
             producer.flush(timeout=30)
+
             producer.close(timeout=30)
+
         session.close()
-        log.info("Producer stopped.")
+
+        log.info(
+            "Financial News Producer stopped."
+        )
 
 
 if __name__ == "__main__":
+
     main()
+    
