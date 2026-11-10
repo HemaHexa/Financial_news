@@ -1,4 +1,83 @@
 
+
+import requests
+from bs4 import BeautifulSoup
+import json
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
+}
+
+response = requests.get(URL, headers=headers, timeout=20)
+
+print("HTTP Status:", response.status_code)
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Extract headline
+headline = None
+if soup.find("h1"):
+    headline = soup.find("h1").get_text(" ", strip=True)
+
+# Extract publication date
+published_at = None
+
+for tag in soup.find_all("meta"):
+    if tag.get("property") == "article:published_time":
+        published_at = tag.get("content")
+        break
+
+    if tag.get("name") in ["publish-date", "date"]:
+        published_at = tag.get("content")
+        break
+
+# Extract article text
+article = soup.find("article")
+
+if article:
+    paragraphs = article.find_all("p")
+else:
+    paragraphs = soup.find_all("p")
+
+full_text = "\n".join(
+    p.get_text(" ", strip=True)
+    for p in paragraphs
+    if p.get_text(" ", strip=True)
+)
+
+article_data = {
+    "source": "Business Standard",
+    "company": "RELIANCE",
+    "headline": headline,
+    "published_at": published_at,
+    "url": URL,
+    "full_text": full_text
+}
+
+print("\n========== SCRAPED ARTICLE ==========")
+print(json.dumps(article_data, indent=4, ensure_ascii=False))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import requests
 from bs4 import BeautifulSoup
 
