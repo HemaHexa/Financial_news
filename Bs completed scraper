@@ -1,0 +1,115 @@
+
+import requests
+import json
+from bs4 import BeautifulSoup
+from datetime import datetime, timezone
+from pathlib import Path
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+
+def scrape_article(url):
+
+    response = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=20
+    )
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Headline
+    headline_tag = soup.find("h1")
+    headline = (
+        headline_tag.get_text(" ", strip=True)
+        if headline_tag else None
+    )
+
+    # Publication date
+    published_at = None
+
+    for tag in soup.find_all("meta"):
+        if tag.get("property") == "article:published_time":
+            published_at = tag.get("content")
+            break
+
+    if not published_at:
+        for tag in soup.find_all("p"):
+            text = tag.get_text(" ", strip=True)
+            if "First Published:" in text:
+                published_at = text.split(
+                    "First Published:", 1
+                )[1].strip()
+                break
+
+    # Article body
+    body = soup.find("div", class_="storycontent")
+
+    if not body:
+        raise ValueError("Article body not found")
+
+    unwanted = [
+        '[class*="latestnews"]',
+        '[class*="recommendation"]',
+        '[class*="alsoRead"]',
+        "style",
+        "script"
+    ]
+
+    for selector in unwanted:
+        for element in body.select(selector):
+            element.decompose()
+
+    full_text = body.get_text(" ", strip=True)
+
+    if not full_text:
+        raise ValueError("Article text is empty")
+
+    article = {
+        "company_ticker": "RELIANCE",
+        "source": "Business Standard",
+        "headline": headline,
+        "published_at": published_at,
+        "url": url,
+        "full_text": full_text,
+        "ingested_at": datetime.now(
+            timezone.utc
+        ).isoformat()
+    }
+
+    return article
+
+
+if __name__ == "__main__":
+
+    article = scrape_article(URL)
+
+    print("\n========== COMPLETE ARTICLE ==========\n")
+
+    print(json.dumps(
+        article,
+        indent=4,
+        ensure_ascii=False
+    ))
+
+    output_dir = Path("scraped_data")
+    output_dir.mkdir(exist_ok=True)
+
+    with open(
+        output_dir / "reliance_article.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+        json.dump(
+            article,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    print("\nArticle saved successfully!")
