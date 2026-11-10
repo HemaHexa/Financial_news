@@ -1,0 +1,332 @@
+
+import requests
+import json
+import re
+import time
+
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+# ---------------------------------------
+# CONFIGURATION
+# ---------------------------------------
+
+BASE_URL = "https://www.business-standard.com"
+
+PAGES = [
+    BASE_URL + "/companies/news",
+    BASE_URL + "/markets/news"
+]
+
+OUTPUT_FILE = "reliance_15day_articles.json"
+
+KEYWORDS = [
+    "reliance industries",
+    "reliance industries limited",
+    "reliance consumer products",
+    "reliance retail",
+    "reliance jio",
+    "reliance group",
+    "reliance"
+]
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+    )
+}
+
+IST = ZoneInfo("Asia/Kolkata")
+NOW = datetime.now(IST)
+CUTOFF = NOW - timedelta(days=15)
+
+session = requests.Session()
+session.headers.update(HEADERS)
+
+
+# ---------------------------------------
+# DATE EXTRACTION
+# ---------------------------------------
+
+def extract_published_date(soup):
+
+    tag = soup.find(
+        "meta",
+        attrs={"property": "article:published_time"}
+    )
+
+    if not tag:
+        return None
+
+    value = tag.get("content")
+
+    if not value:
+        return None
+
+    try:
+        published = datetime.fromisoformat(
+            value.replace("Z", "+00:00")
+        )
+
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=IST)
+
+        return published.astimezone(IST)
+
+    except ValueError:
+        return None
+
+
+# ---------------------------------------
+# ARTICLE BODY EXTRACTION
+# ---------------------------------------
+
+def extract_article_body(soup):
+
+    selectors = [
+        "div[class*='storycontent']",
+        "div[class*='storyContent']",
+        "article"
+    ]
+
+    for selector in selectors:
+        body = soup.select_one(selector)
+
+        if body:
+            for unwanted in body.select(
+                "script, style, noscript, iframe"
+            ):
+                unwanted.decompose()
+
+            paragraphs = [
+                p.get_text(" ", strip=True)
+                for p in body.find_all(["p", "h2", "h3"])
+            ]
+
+            text = " ".join(
+                p for p in paragraphs if p
+            )
+
+            if len(text) > 200:
+                return text
+
+    return ""
+
+
+# ---------------------------------------
+# COMPANY MATCHING
+# ---------------------------------------
+
+def is_reliance_article(headline, body):
+
+    combined = (headline + " " + body).lower()
+
+    return any(
+        keyword in combined
+        for keyword in KEYWORDS
+    )
+
+
+# ---------------------------------------
+# DISCOVER ARTICLE URLS
+# ---------------------------------------
+
+def discover_article_links():
+
+    articles = {}
+
+    for page_url in PAGES:
+
+        print("\nChecking section:", page_url)
+
+        try:
+            response = session.get(
+                page_url,
+                timeout=25
+            )
+
+            response.raise_for_status()
+
+            soup = BeautifulSoup(
+                response.text,
+                "html.parser"
+            )
+
+            count_before = len(articles)
+
+            for a in soup.find_all("a", href=True):
+
+                headline = a.get_text(
+                    " ",
+                    strip=True
+                )
+
+                url = urljoin(
+                    BASE_URL,
+                    a["href"]
+                ).split("#")[0]
+
+                if (
+                    "business-standard.com" not in url
+                    or not headline
+                    or not url.endswith(".html")
+                ):
+                    continue
+
+                if "/companies/news/" not in url and \
+                   "/markets/" not in url:
+                    continue
+
+                if url not in articles:
+                    articles[url] = headline
+
+            print(
+                "New article links found:",
+                len(articles) - count_before
+            )
+
+        except requests.RequestException as error:
+            print("Section error:", error)
+
+    print("\nTOTAL UNIQUE ARTICLE LINKS:", len(articles))
+
+    return articles
+
+
+# ---------------------------------------
+# SCRAPE INDIVIDUAL ARTICLES
+# ---------------------------------------
+
+def scrape_article(url, discovered_headline):
+
+    try:
+        response = session.get(
+            url,
+            timeout=25
+        )
+
+        response.raise_for_status()
+
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
+
+        # Prefer the actual article heading
+        heading = soup.find("h1")
+
+        headline = (
+            heading.get_text(" ", strip=True)
+            if heading
+            else discovered_headline
+        )
+
+        published_at = extract_published_date(soup)
+
+        if not published_at:
+            return None
+
+        if published_at < CUTOFF or published_at > NOW:
+            return None
+
+        full_text = extract_article_body(soup)
+
+        if not full_text:
+            return None
+
+        if not is_reliance_article(headline, full_text):
+            return None
+
+        return {
+            "company_ticker": "RELIANCE",
+            "source": "Business Standard",
+            "headline": headline,
+            "published_at": published_at.isoformat(),
+            "url": url,
+            "full_text": full_text,
+            "ingested_at": datetime.now(IST).isoformat()
+        }
+
+    except requests.RequestException as error:
+        print("Article request failed:", url, error)
+        return None
+
+
+# ---------------------------------------
+# MAIN
+# ---------------------------------------
+
+def main():
+
+    print("=" * 70)
+    print("BUSINESS STANDARD - RELIANCE 15-DAY SCRAPER")
+    print("=" * 70)
+
+    print("Current IST:", NOW.isoformat())
+    print("15-day cutoff:", CUTOFF.isoformat())
+
+    links = discover_article_links()
+
+    results = []
+
+    print("\n========== SCRAPING ARTICLES ==========")
+
+    for index, (url, headline) in enumerate(
+        links.items(),
+        start=1
+    ):
+
+        print(
+            f"\n[{index}/{len(links)}] Checking: {headline[:90]}"
+        )
+
+        article = scrape_article(url, headline)
+
+        if article:
+            results.append(article)
+            print("RELIANCE MATCH:", article["published_at"])
+        else:
+            print("Skipped: not a matching, dated article in range")
+
+        # Be polite to the publisher
+        time.sleep(0.3)
+
+    # Sort newest first
+    results.sort(
+        key=lambda item: item["published_at"],
+        reverse=True
+    )
+
+    with open(
+        OUTPUT_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            results,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+    print("\n" + "=" * 70)
+    print("SCRAPING COMPLETED")
+    print("=" * 70)
+
+    print("Article links discovered:", len(links))
+    print("Reliance articles in 15 days:", len(results))
+    print("Saved file:", OUTPUT_FILE)
+
+    for article in results:
+
+        print("\nHeadline:", article["headline"])
+        print("Published:", article["published_at"])
+        print("URL:", article["url"])
+
+
+if __name__ == "__main__":
+    main()
