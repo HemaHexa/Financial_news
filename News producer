@@ -1,4 +1,579 @@
 
+import requests
+import feedparser
+import json
+import time
+import hashlib
+import re
+import calendar
+
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
+from kafka import KafkaProducer
+
+# ---------------- CONFIGURATION ----------------
+
+RSS_URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+
+CHECK_INTERVAL = 60
+DAYS_BACK = 7
+
+IST = ZoneInfo("Asia/Kolkata")
+
+# ---------------- COMPANY KEYWORDS ----------------
+
+COMPANIES = {
+    "RELIANCE": ["Reliance Industries", "RIL", "RELIANCE"],
+    "TCS": ["Tata Consultancy Services", "TCS"],
+    "INFY": ["Infosys", "INFY"],
+    "HDFCBANK": ["HDFC Bank", "HDFCBANK"],
+    "ICICIBANK": ["ICICI Bank", "ICICIBANK"],
+    "TATASTEEL": ["Tata Steel", "TATASTEEL"],
+    "SBIN": ["State Bank of India", "SBI", "SBIN"],
+    "ITC": ["ITC Limited", "ITC Ltd"],
+    "SUNPHARMA": ["Sun Pharmaceutical", "Sun Pharma", "SUNPHARMA"],
+    "BHARTIARTL": ["Bharti Airtel", "Airtel", "BHARTIARTL"],
+    "ADANIENT": ["Adani Enterprises", "ADANIENT"],
+    "COALINDIA": ["Coal India", "COALINDIA"],
+    "BAJFINANCE": ["Bajaj Finance", "BAJFINANCE"]
+}
+
+# ---------------- KAFKA PRODUCER ----------------
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    key_serializer=lambda k: k.encode("utf-8")
+)
+
+seen_ids = set()
+
+# ---------------- COMPANY MATCHING ----------------
+
+def find_companies(text):
+
+    matched = []
+
+    text = text.lower()
+
+    for ticker, keywords in COMPANIES.items():
+
+        for keyword in keywords:
+
+            pattern = r"(?<!\w)" + re.escape(keyword.lower()) + r"(?!\w)"
+
+            if re.search(pattern, text):
+                matched.append(ticker)
+                break
+
+    return matched
+
+
+# ---------------- NEWS COLLECTION ----------------
+
+def collect_news():
+
+    try:
+
+        print("\nFetching Business Standard RSS...")
+
+        response = requests.get(
+            RSS_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=20
+        )
+
+        response.raise_for_status()
+
+        feed = feedparser.parse(response.content)
+
+        now = datetime.now(IST)
+        today = now.date()
+
+        cutoff = now - timedelta(days=DAYS_BACK)
+
+        print("Articles received:", len(feed.entries))
+        print("Today's date:", today)
+
+        # Store parsed articles
+        articles = []
+
+        for entry in feed.entries:
+
+            title = entry.get("title", "")
+            link = entry.get("link", "")
+            description = entry.get("summary", "")
+
+            searchable_text = title + " " + description
+
+            matched_companies = find_companies(searchable_text)
+
+            if not matched_companies:
+                continue
+
+            published_struct = (
+                entry.get("published_parsed")
+                or entry.get("updated_parsed")
+            )
+
+            if not published_struct:
+                continue
+
+            published_at = datetime.fromtimestamp(
+                calendar.timegm(published_struct),
+                timezone.utc
+            ).astimezone(IST)
+
+            # Ignore future-dated or older articles
+            if published_at > now or published_at < cutoff:
+                continue
+
+            news_id = hashlib.sha256(
+                (link or title).encode("utf-8")
+            ).hexdigest()
+
+            articles.append({
+                "id": news_id,
+                "title": title,
+                "link": link,
+                "description": description,
+                "published_at": published_at,
+                "matched_companies": matched_companies
+            })
+
+        # ---------------- PRIORITY SELECTION ----------------
+
+        selected_articles = {}
+
+        for ticker in COMPANIES:
+
+            company_articles = [
+                article for article in articles
+                if ticker in article["matched_companies"]
+            ]
+
+            # First priority: Today's news
+            today_news = [
+                article for article in company_articles
+                if article["published_at"].date() == today
+            ]
+
+            if today_news:
+
+                selected = today_news
+
+                print(
+                    f"\n{ticker}: TODAY'S NEWS FOUND "
+                    f"({len(selected)} articles)"
+                )
+
+            else:
+
+                # Fallback: Previous seven days
+                selected = [
+                    article for article in company_articles
+                    if article["published_at"].date() < today
+                ]
+
+                print(
+                    f"\n{ticker}: NO NEWS TODAY. "
+                    f"FALLBACK ARTICLES: {len(selected)}"
+                )
+
+            # Aggregate articles without duplicate ticker events
+            for article in selected:
+
+                news_id = article["id"]
+
+                if news_id not in selected_articles:
+
+                    selected_articles[news_id] = {
+                        "article": article,
+                        "tickers": set()
+                    }
+
+                selected_articles[news_id]["tickers"].add(ticker)
+
+        # ---------------- KAFKA PUBLISHING ----------------
+
+        sent_count = 0
+
+        for news_id, item in selected_articles.items():
+
+            if news_id in seen_ids:
+                continue
+
+            article = item["article"]
+
+            news_event = {
+
+                "id": news_id,
+
+                "source": "Business Standard",
+
+                "tickers": sorted(item["tickers"]),
+
+                "timestamp": now.isoformat(),
+
+                "published_at": article["published_at"].isoformat(),
+
+                "title": article["title"],
+
+                "link": article["link"],
+
+                "raw_description": article["description"]
+
+            }
+
+            producer.send(
+                KAFKA_TOPIC,
+                key=news_id,
+                value=news_event
+            )
+
+            seen_ids.add(news_id)
+
+            sent_count += 1
+
+            print(
+                "SENT:",
+                sorted(item["tickers"]),
+                "-",
+                article["title"]
+            )
+
+        producer.flush()
+
+        print("\n--------------------------------")
+        print("NEWS COLLECTION COMPLETED")
+        print("Selected unique articles:", len(selected_articles))
+        print("New Kafka messages sent:", sent_count)
+        print("--------------------------------")
+
+    except Exception as e:
+
+        print("News ingestion error:", e)
+
+
+# ---------------- CONTINUOUS EXECUTION ----------------
+
+if __name__ == "__main__":
+
+    print("Indian Company-Specific News Producer Started")
+
+    while True:
+
+        collect_news()
+
+        print(f"\nWaiting {CHECK_INTERVAL} seconds...")
+
+        time.sleep(CHECK_INTERVAL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import requests
+import feedparser
+import json
+import time
+import hashlib
+import re
+import calendar
+
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
+from kafka import KafkaProducer
+
+# ---------------- CONFIGURATION ----------------
+
+RSS_URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+
+CHECK_INTERVAL = 60
+DAYS_BACK = 7
+
+IST = ZoneInfo("Asia/Kolkata")
+
+# ---------------- COMPANY KEYWORDS ----------------
+
+COMPANIES = {
+    "RELIANCE": ["Reliance Industries", "RIL", "RELIANCE"],
+    "TCS": ["Tata Consultancy Services", "TCS"],
+    "INFY": ["Infosys", "INFY"],
+    "HDFCBANK": ["HDFC Bank", "HDFCBANK"],
+    "ICICIBANK": ["ICICI Bank", "ICICIBANK"],
+    "TATASTEEL": ["Tata Steel", "TATASTEEL"],
+    "SBIN": ["State Bank of India", "SBI", "SBIN"],
+    "ITC": ["ITC Limited", "ITC Ltd"],
+    "SUNPHARMA": ["Sun Pharmaceutical", "Sun Pharma", "SUNPHARMA"],
+    "BHARTIARTL": ["Bharti Airtel", "Airtel", "BHARTIARTL"],
+    "ADANIENT": ["Adani Enterprises", "ADANIENT"],
+    "COALINDIA": ["Coal India", "COALINDIA"],
+    "BAJFINANCE": ["Bajaj Finance", "BAJFINANCE"]
+}
+
+# ---------------- KAFKA PRODUCER ----------------
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    key_serializer=lambda k: k.encode("utf-8")
+)
+
+seen_ids = set()
+
+# ---------------- COMPANY MATCHING ----------------
+
+def find_companies(text):
+
+    matched = []
+
+    text = text.lower()
+
+    for ticker, keywords in COMPANIES.items():
+
+        for keyword in keywords:
+
+            pattern = r"(?<!\w)" + re.escape(keyword.lower()) + r"(?!\w)"
+
+            if re.search(pattern, text):
+                matched.append(ticker)
+                break
+
+    return matched
+
+
+# ---------------- NEWS COLLECTION ----------------
+
+def collect_news():
+
+    try:
+
+        print("\nFetching Business Standard RSS...")
+
+        response = requests.get(
+            RSS_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=20
+        )
+
+        response.raise_for_status()
+
+        feed = feedparser.parse(response.content)
+
+        now = datetime.now(IST)
+        today = now.date()
+
+        cutoff = now - timedelta(days=DAYS_BACK)
+
+        print("Articles received:", len(feed.entries))
+        print("Today's date:", today)
+
+        # Store parsed articles
+        articles = []
+
+        for entry in feed.entries:
+
+            title = entry.get("title", "")
+            link = entry.get("link", "")
+            description = entry.get("summary", "")
+
+            searchable_text = title + " " + description
+
+            matched_companies = find_companies(searchable_text)
+
+            if not matched_companies:
+                continue
+
+            published_struct = (
+                entry.get("published_parsed")
+                or entry.get("updated_parsed")
+            )
+
+            if not published_struct:
+                continue
+
+            published_at = datetime.fromtimestamp(
+                calendar.timegm(published_struct),
+                timezone.utc
+            ).astimezone(IST)
+
+            # Ignore future-dated or older articles
+            if published_at > now or published_at < cutoff:
+                continue
+
+            news_id = hashlib.sha256(
+                (link or title).encode("utf-8")
+            ).hexdigest()
+
+            articles.append({
+                "id": news_id,
+                "title": title,
+                "link": link,
+                "description": description,
+                "published_at": published_at,
+                "matched_companies": matched_companies
+            })
+
+        # ---------------- PRIORITY SELECTION ----------------
+
+        selected_articles = {}
+
+        for ticker in COMPANIES:
+
+            company_articles = [
+                article for article in articles
+                if ticker in article["matched_companies"]
+            ]
+
+            # First priority: Today's news
+            today_news = [
+                article for article in company_articles
+                if article["published_at"].date() == today
+            ]
+
+            if today_news:
+
+                selected = today_news
+
+                print(
+                    f"\n{ticker}: TODAY'S NEWS FOUND "
+                    f"({len(selected)} articles)"
+                )
+
+            else:
+
+                # Fallback: Previous seven days
+                selected = [
+                    article for article in company_articles
+                    if article["published_at"].date() < today
+                ]
+
+                print(
+                    f"\n{ticker}: NO NEWS TODAY. "
+                    f"FALLBACK ARTICLES: {len(selected)}"
+                )
+
+            # Aggregate articles without duplicate ticker events
+            for article in selected:
+
+                news_id = article["id"]
+
+                if news_id not in selected_articles:
+
+                    selected_articles[news_id] = {
+                        "article": article,
+                        "tickers": set()
+                    }
+
+                selected_articles[news_id]["tickers"].add(ticker)
+
+        # ---------------- KAFKA PUBLISHING ----------------
+
+        sent_count = 0
+
+        for news_id, item in selected_articles.items():
+
+            if news_id in seen_ids:
+                continue
+
+            article = item["article"]
+
+            news_event = {
+
+                "id": news_id,
+
+                "source": "Business Standard",
+
+                "tickers": sorted(item["tickers"]),
+
+                "timestamp": now.isoformat(),
+
+                "published_at": article["published_at"].isoformat(),
+
+                "title": article["title"],
+
+                "link": article["link"],
+
+                "raw_description": article["description"]
+
+            }
+
+            producer.send(
+                KAFKA_TOPIC,
+                key=news_id,
+                value=news_event
+            )
+
+            seen_ids.add(news_id)
+
+            sent_count += 1
+
+            print(
+                "SENT:",
+                sorted(item["tickers"]),
+                "-",
+                article["title"]
+            )
+
+        producer.flush()
+
+        print("\n--------------------------------")
+        print("NEWS COLLECTION COMPLETED")
+        print("Selected unique articles:", len(selected_articles))
+        print("New Kafka messages sent:", sent_count)
+        print("--------------------------------")
+
+    except Exception as e:
+
+        print("News ingestion error:", e)
+
+
+# ---------------- CONTINUOUS EXECUTION ----------------
+
+if __name__ == "__main__":
+
+    print("Indian Company-Specific News Producer Started")
+
+    while True:
+
+        collect_news()
+
+        print(f"\nWaiting {CHECK_INTERVAL} seconds...")
+
+        time.sleep(CHECK_INTERVAL)
+
 
 import requests
 import feedparser
