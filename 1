@@ -1,61 +1,286 @@
 
+import json
+import time
+import hashlib
+import logging
+from datetime import datetime, timezone
+from urllib.parse import urlparse
+
+import truststore
+truststore.inject_into_ssl()
+
 import feedparser
 import requests
-from datetime import datetime, timezone
+from bs4 import BeautifulSoup
 
-# RSS feed URLs
+
+# =====================================================
+# CONFIGURATION
+# =====================================================
+
 RSS_FEEDS = {
-    "Business Standard": "https://www.business-standard.com/rss/latest.rss",
-    "Moneycontrol": "https://www.moneycontrol.com/rss/latestnews.xml",
-    "CNBC-TV18": "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
-    "Mint": "https://www.livemint.com/rss/marketsRSS"
+    "Business Standard":
+        "https://www.business-standard.com/rss/latest.rss",
+
+    "Moneycontrol":
+        "https://www.moneycontrol.com/rss/latestnews.xml",
+
+    "CNBC-TV18":
+        "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
+
+    "Mint":
+        "https://www.livemint.com/rss/markets"
 }
 
+REQUEST_TIMEOUT = 20
 
-def fetch_rss_news(source, feed_url):
-    """Fetch raw news items from one RSS publisher."""
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
+}
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; FinanceNewsPipeline/1.0)"
-    }
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger("FinancialNewsProducer")
+
+
+# =====================================================
+# SESSION
+# =====================================================
+
+session = requests.Session()
+session.headers.update(HEADERS)
+
+
+# =====================================================
+# ARTICLE ID GENERATION
+# =====================================================
+
+def generate_article_id(url, headline):
+    """Generate a stable ID from article URL and headline."""
+
+    unique_value = url or headline
+
+    return hashlib.sha256(
+        unique_value.encode("utf-8")
+    ).hexdigest()
+
+
+# =====================================================
+# WEB SCRAPING
+# =====================================================
+
+def scrape_article(url):
+    """
+    Extract article text and preserve article HTML.
+
+    Only accessible public article content is collected.
+    """
+
+    if not url:
+        return {
+            "full_text": "",
+            "raw_html": "",
+            "scrape_status": "missing_url"
+        }
 
     try:
-        response = requests.get(
-            feed_url,
-            headers=headers,
-            timeout=20
+        response = session.get(
+            url,
+            timeout=REQUEST_TIMEOUT
         )
+
+        response.raise_for_status()
+
+        content_type = response.headers.get(
+            "Content-Type", ""
+        ).lower()
+
+        if "html" not in content_type:
+            return {
+                "full_text": "",
+                "raw_html": "",
+                "scrape_status": "not_html"
+            }
+
+        soup = BeautifulSoup(
+            response.content,
+            "html.parser"
+        )
+
+        # Remove irrelevant page elements.
+        for element in soup([
+            "script",
+            "style",
+            "nav",
+            "footer",
+            "header",
+            "aside",
+            "noscript"
+        ]):
+            element.decompose()
+
+        article = soup.find("article")
+
+        if article:
+            raw_html = str(article)
+
+            full_text = article.get_text(
+                separator=" ",
+                strip=True
+            )
+
+        else:
+            raw_html = ""
+            full_text = ""
+
+        if not full_text:
+            status = "no_article_content"
+        else:
+            status = "success"
+
+        return {
+            "full_text": full_text,
+            "raw_html": raw_html,
+            "scrape_status": status
+        }
+
+    except requests.RequestException as error:
+
+        logger.warning(
+            "Article scraping failed for %s: %s",
+            url,
+            error
+        )
+
+        return {
+            "full_text": "",
+            "raw_html": "",
+            "scrape_status": "request_failed"
+        }
+
+    except Exception:
+        logger.exception(
+            "Unexpected scraping error for %s",
+            url
+        )
+
+        return {
+            "full_text": "",
+            "raw_html": "",
+            "scrape_status": "processing_failed"
+        }
+
+
+# =====================================================
+# RSS COLLECTION
+# =====================================================
+
+def fetch_rss_news(source, feed_url):
+    """Fetch news items from a publisher's RSS feed."""
+
+    logger.info("Fetching RSS from %s", source)
+
+    try:
+        response = session.get(
+            feed_url,
+            timeout=REQUEST_TIMEOUT
+        )
+
         response.raise_for_status()
 
         feed = feedparser.parse(response.content)
 
+        if feed.bozo:
+            logger.warning(
+                "RSS parsing warning for %s: %s",
+                source,
+                feed.bozo_exception
+            )
+
         articles = []
 
         for entry in feed.entries:
+
+            headline = entry.get("title", "")
+            url = entry.get("link", "")
+
+            if not headline or not url:
+                continue
+
             article = {
+                "article_id": generate_article_id(
+                    url,
+                    headline
+                ),
+
                 "source": source,
-                "headline": entry.get("title", ""),
-                "url": entry.get("link", ""),
-                "published_at": entry.get("published", ""),
-                "description": entry.get("summary", ""),
-                "raw_content": entry.get("content", []),
-                "ingested_at": datetime.now(timezone.utc).isoformat()
+
+                "headline": headline,
+
+                "url": url,
+
+                "published_at": entry.get(
+                    "published",
+                    entry.get("updated", "")
+                ),
+
+                "description": entry.get(
+                    "summary",
+                    ""
+                ),
+
+                "raw_content": entry.get(
+                    "content",
+                    []
+                ),
+
+                "rss_raw": entry,
+
+                "ingested_at": datetime.now(
+                    timezone.utc
+                ).isoformat()
             }
 
             articles.append(article)
 
-        print(f"{source}: fetched {len(articles)} articles")
+        logger.info(
+            "%s: fetched %d RSS articles",
+            source,
+            len(articles)
+        )
 
         return articles
 
     except requests.RequestException as error:
-        print(f"{source}: RSS request failed - {error}")
+
+        logger.error(
+            "%s RSS request failed: %s",
+            source,
+            error
+        )
+
         return []
 
-    except Exception as error:
-        print(f"{source}: processing failed - {error}")
+    except Exception:
+
+        logger.exception(
+            "Unexpected RSS error for %s",
+            source
+        )
+
         return []
 
+
+# =====================================================
+# COLLECT FROM ALL PUBLISHERS
+# =====================================================
 
 def fetch_all_sources():
     """Fetch RSS news from all four publishers."""
@@ -63,14 +288,126 @@ def fetch_all_sources():
     all_articles = []
 
     for source, feed_url in RSS_FEEDS.items():
-        articles = fetch_rss_news(source, feed_url)
+
+        articles = fetch_rss_news(
+            source,
+            feed_url
+        )
+
         all_articles.extend(articles)
+
+    logger.info(
+        "Total RSS articles collected: %d",
+        len(all_articles)
+    )
 
     return all_articles
 
 
-if __name__ == "__main__":
-    news = fetch_all_sources()
+# =====================================================
+# ENRICH RSS ITEMS WITH ARTICLE CONTENT
+# =====================================================
 
-    print("\nTotal articles fetched:", len(news))
+def enrich_articles(articles):
+    """Scrape accessible article pages for full content."""
+
+    enriched_articles = []
+
+    total = len(articles)
+
+    for index, article in enumerate(articles, start=1):
+
+        logger.info(
+            "Scraping article %d/%d: %s",
+            index,
+            total,
+            article["headline"]
+        )
+
+        scraped_data = scrape_article(
+            article["url"]
+        )
+
+        article["full_text"] = scraped_data[
+            "full_text"
+        ]
+
+        article["raw_html"] = scraped_data[
+            "raw_html"
+        ]
+
+        article["scrape_status"] = scraped_data[
+            "scrape_status"
+        ]
+
+        enriched_articles.append(article)
+
+        # Avoid sending requests too rapidly.
+        time.sleep(1)
+
+    return enriched_articles
+
+
+# =====================================================
+# MAIN EXECUTION
+# =====================================================
+
+def main():
+
+    logger.info("Starting Financial News Producer")
+
+    # Stage 1: Collect RSS news.
+    articles = fetch_all_sources()
+
+    if not articles:
+        logger.warning("No RSS articles collected.")
+        return
+
+    # Stage 2: Extract accessible article content.
+    enriched_articles = enrich_articles(
+        articles
+    )
+
+    # Stage 3: Display collection summary.
+    successful = sum(
+        1 for article in enriched_articles
+        if article["scrape_status"] == "success"
+    )
+
+    logger.info("--------------------------------")
+    logger.info("RSS articles collected: %d", len(articles))
+    logger.info("Articles scraped successfully: %d", successful)
+    logger.info(
+        "Articles without full text: %d",
+        len(articles) - successful
+    )
+    logger.info("--------------------------------")
+
+    # Temporary JSON output for inspection.
+    output_file = (
+        "data/news_baseline_test.json"
+    )
+
+    with open(
+        output_file,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            enriched_articles,
+            file,
+            ensure_ascii=False,
+            indent=4,
+            default=str
+        )
+
+    logger.info(
+        "News output saved to %s",
+        output_file
+    )
+
+
+if __name__ == "__main__":
+    main()
     
