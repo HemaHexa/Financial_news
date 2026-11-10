@@ -4,6 +4,12 @@ python -c "import requests,feedparser; u='https://www.business-standard.com/rss/
 
 
 
+python -c "import requests,feedparser; u='https://www.business-standard.com/rss/markets-106.rss'; r=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=20); f=feedparser.parse(r.content); print('STATUS:',r.status_code); print('PARSER ERROR:',f.bozo); print('TOTAL NEWS:',len(f.entries)); [print('\nTITLE:',e.get('title'),'\nLINK:',e.get('link')) for e in f.entries[:5]]"
+
+
+
+
+
 hu$sparkCmd = Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter spark-submit.cmd -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
 
 $sparkCmd
