@@ -1,0 +1,35 @@
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+headers = {"User-Agent": "Mozilla/5.0"}
+
+response = requests.get(URL, headers=headers, timeout=20)
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Find article body
+article_body = soup.find(
+    "div",
+    class_="storycontent"
+)
+
+if article_body:
+    paragraphs = article_body.find_all("p")
+
+    full_text = "\n".join(
+        p.get_text(" ", strip=True)
+        for p in paragraphs
+        if p.get_text(" ", strip=True)
+    )
+
+    print("ARTICLE BODY FOUND!")
+    print("Paragraph count:", len(paragraphs))
+    print("\n========== ARTICLE CONTENT ==========\n")
+    print(full_text)
+
+    print("\nTotal characters:", len(full_text))
+
+else:
+    print("Article body not found")
