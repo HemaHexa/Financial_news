@@ -1,0 +1,39 @@
+(venv) PS C:\FinancePipeline\test> python bs_reliance_test.py
+
+======================================================================
+Testing: https://www.business-standard.com/companies/news
+HTTP Status: 200
+Content Type: text/html; charset=utf-8
+Response Size: 405406 bytes
+Page Title: Companies News | Find Latest Company News Online - Business Standard
+Reliance-related links: 1
+Headline: Reliance may struggle to repeat cola disruption in biscuits: Britannia CEO | URL: https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html
+
+======================================================================
+Testing: https://www.business-standard.com/markets/news
+HTTP Status: 200
+Content Type: text/html; charset=utf-8
+Response Size: 396748 bytes
+Page Title: Markets News | Latest Market News | Market News Headlines - Business Standard
+Reliance-related links: 0
+
+======================================================================
+Testing: https://www.business-standard.com/rss/markets-106.rss
+HTTP Status: 200
+Content Type: application/rss+xml
+Response Size: 55331 bytes
+C:\FinancePipeline\test\bs_reliance_test.py:29: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(response.text, "html.parser")
+Page Title: Share Market Today
+Reliance-related links: 0
+(venv) PS C:\FinancePipeline\test> 
