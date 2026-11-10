@@ -1,0 +1,62 @@
+
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+PAGES = [
+    "https://www.business-standard.com/companies/news",
+    "https://www.business-standard.com/markets/news"
+]
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+KEYWORDS = [
+    "reliance industries",
+    "reliance industries limited",
+    "reliance"
+]
+
+found_articles = {}
+
+for page_url in PAGES:
+
+    print("\nChecking:", page_url)
+
+    response = requests.get(
+        page_url,
+        headers=HEADERS,
+        timeout=20
+    )
+
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    for link in soup.find_all("a", href=True):
+
+        headline = link.get_text(" ", strip=True)
+        headline_lower = headline.lower()
+
+        if not any(word in headline_lower for word in KEYWORDS):
+            continue
+
+        article_url = urljoin(page_url, link["href"])
+
+        if "/news/" not in article_url:
+            continue
+
+        if "business-standard.com" not in article_url:
+            continue
+
+        if article_url not in found_articles:
+            found_articles[article_url] = headline
+
+for i, (url, headline) in enumerate(found_articles.items(), 1):
+
+    print(f"\nARTICLE {i}")
+    print("Headline:", headline)
+    print("URL:", url)
+
+print("\nTotal discovered articles:", len(found_articles))
