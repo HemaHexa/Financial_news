@@ -6,12 +6,18 @@ import pyarrow.parquet as pq
 ROOT = Path(__file__).resolve().parent
 BRONZE_DIR = ROOT / "data" / "bronze" / "news_history"
 
+EXPECTED_COLUMNS = [
+    "kafka_key",
+    "raw_json",
+    "topic",
+    "partition",
+    "offset",
+    "kafka_ts"
+]
+
 def main():
-    files = sorted(
-        BRONZE_DIR.rglob("*.parquet"),
-        key=lambda f: f.stat().st_mtime,
-        reverse=True
-    )
+
+    files = list(BRONZE_DIR.rglob("*.parquet"))
 
     if not files:
         print("No Parquet files found.")
@@ -20,33 +26,35 @@ def main():
     frames = []
 
     for file in files:
-        try:
-            table = pq.read_table(file)
-            frames.append(table.to_pandas())
-        except Exception as exc:
-            print(f"Could not read {file}: {exc}")
-
-    if not frames:
-        print("No readable Parquet data.")
-        return
+        table = pq.read_table(file)
+        frames.append(table.to_pandas())
 
     df = pd.concat(frames, ignore_index=True)
 
-    print("\n========== BRONZE NEWS TABLE ==========")
+    # Verify Bronze schema
+    missing = set(EXPECTED_COLUMNS) - set(df.columns)
+
+    if missing:
+        print("Missing Bronze columns:", missing)
+        return
+
+    df = df[EXPECTED_COLUMNS]
+
+    print("\n========== BRONZE PARQUET TABLE ==========")
     print("Total records:", len(df))
-    print("Parquet files:", len(frames))
+    print("Total files:", len(files))
 
     pd.set_option("display.max_columns", None)
-    pd.set_option("display.max_colwidth", 70)
-    pd.set_option("display.width", 220)
+    pd.set_option("display.max_colwidth", 100)
+    pd.set_option("display.width", 250)
 
-    print("\n", df.to_string(index=False))
+    print(df.to_string(index=False))
 
-    output = ROOT / "data" / "bronze" / "bronze_news_preview.csv"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output, index=False)
+    # Save table for opening in Excel
+    output = ROOT / "data" / "bronze" / "bronze_table.csv"
+    df.to_csv(output, index=False, encoding="utf-8-sig")
 
-    print("\nSaved latest table to:", output)
+    print("\nBronze table saved:", output)
 
 
 if __name__ == "__main__":
