@@ -1,3 +1,216 @@
+
+
+import requests
+import feedparser
+import json
+import time
+import hashlib
+import re
+import calendar
+
+from datetime import datetime, timezone, timedelta
+from kafka import KafkaProducer
+
+# ---------------- CONFIGURATION ----------------
+
+RSS_URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+
+CHECK_INTERVAL = 60
+DAYS_BACK = 7
+
+# ---------------- COMPANY KEYWORDS ----------------
+
+COMPANIES = {
+    "RELIANCE": ["Reliance Industries", "RIL", "RELIANCE"],
+    "TCS": ["Tata Consultancy Services", "TCS"],
+    "INFY": ["Infosys", "INFY"],
+    "HDFCBANK": ["HDFC Bank", "HDFCBANK"],
+    "ICICIBANK": ["ICICI Bank", "ICICIBANK"],
+    "TATASTEEL": ["Tata Steel", "TATASTEEL"],
+    "SBIN": ["State Bank of India", "SBI", "SBIN"],
+    "ITC": ["ITC Limited", "ITC Ltd"],
+    "SUNPHARMA": ["Sun Pharmaceutical", "Sun Pharma", "SUNPHARMA"],
+    "BHARTIARTL": ["Bharti Airtel", "Airtel", "BHARTIARTL"],
+    "ADANIENT": ["Adani Enterprises", "ADANIENT"],
+    "COALINDIA": ["Coal India", "COALINDIA"],
+    "BAJFINANCE": ["Bajaj Finance", "BAJFINANCE"]
+}
+
+# ---------------- KAFKA PRODUCER ----------------
+
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    key_serializer=lambda k: k.encode("utf-8")
+)
+
+seen_ids = set()
+
+# ---------------- COMPANY MATCHING ----------------
+
+def find_companies(text):
+
+    matched = []
+
+    text = text.lower()
+
+    for ticker, keywords in COMPANIES.items():
+
+        for keyword in keywords:
+
+            pattern = r"(?<!\w)" + re.escape(keyword.lower()) + r"(?!\w)"
+
+            if re.search(pattern, text):
+                matched.append(ticker)
+                break
+
+    return matched
+
+
+# ---------------- NEWS COLLECTION ----------------
+
+def collect_news():
+
+    try:
+
+        print("\nChecking Business Standard RSS...")
+
+        response = requests.get(
+            RSS_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=20
+        )
+
+        response.raise_for_status()
+
+        feed = feedparser.parse(response.content)
+
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(days=DAYS_BACK)
+
+        print("Articles received:", len(feed.entries))
+
+        for entry in feed.entries:
+
+            title = entry.get("title", "")
+            link = entry.get("link", "")
+            description = entry.get("summary", "")
+
+            # Match company names in title and description
+            searchable_text = title + " " + description
+
+            matched_companies = find_companies(searchable_text)
+
+            # Ignore unrelated news
+            if not matched_companies:
+                continue
+
+            # Extract publication date
+            published_struct = (
+                entry.get("published_parsed")
+                or entry.get("updated_parsed")
+            )
+
+            if not published_struct:
+                print("Skipped: Missing publication date:", title)
+                continue
+
+            published_at = datetime.fromtimestamp(
+                calendar.timegm(published_struct),
+                timezone.utc
+            )
+
+            # Only last 7 days
+            if not (cutoff <= published_at <= now):
+                continue
+
+            # Deduplication
+            news_id = hashlib.sha256(
+                (link or title).encode("utf-8")
+            ).hexdigest()
+
+            if news_id in seen_ids:
+                continue
+
+            news_event = {
+
+                "id": news_id,
+
+                "source": "Business Standard",
+
+                "tickers": matched_companies,
+
+                "timestamp": now.isoformat(),
+
+                "published_at": published_at.isoformat(),
+
+                "title": title,
+
+                "link": link,
+
+                "raw_description": description
+
+            }
+
+            producer.send(
+                KAFKA_TOPIC,
+                key=news_id,
+                value=news_event
+            )
+
+            seen_ids.add(news_id)
+
+            print(
+                "SENT:",
+                matched_companies,
+                "-",
+                title
+            )
+
+        producer.flush()
+
+        print("\nNews collection completed.")
+
+    except Exception as e:
+
+        print("News ingestion error:", e)
+
+
+# ---------------- CONTINUOUS EXECUTION ----------------
+
+if __name__ == "__main__":
+
+    print("Indian Company-Specific News Producer Started")
+
+    while True:
+
+        collect_news()
+
+        print(f"\nWaiting {CHECK_INTERVAL} seconds...")
+
+        time.sleep(CHECK_INTERVAL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import requests
 import feedparser
 import json
