@@ -1,62 +1,864 @@
 
+"""
+REAL-TIME FINANCIAL NEWS PRODUCER
+=================================
+
+Sources:
+1. Business Standard
+2. Moneycontrol
+3. CNBC-TV18
+4. Mint
+
+Requirements:
+- Collect only news mentioning the 15 target companies.
+- Initial baseline collection on startup.
+- Refresh every 15 minutes.
+- RSS only. No article webpage scraping.
+- Preserve original RSS information.
+- Publish matching records to Kafka.
+- Buffer failed Kafka messages locally.
+- No deduplication.
+"""
+
+import hashlib
+import html
+import json
+import logging
+import os
+import re
+import signal
+import sys
+import time
+
+from datetime import datetime, timezone
 from pathlib import Path
-import pandas as pd
-import pyarrow.parquet as pq
 
-ROOT = Path(__file__).resolve().parent
-BRONZE_DIR = ROOT / "data" / "bronze" / "news_history"
+import truststore
+truststore.inject_into_ssl()
 
-EXPECTED_COLUMNS = [
-    "kafka_key",
-    "raw_json",
-    "topic",
-    "partition",
-    "offset",
-    "kafka_ts"
-]
+import feedparser
+import requests
+
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+
+# ==================================================
+# 1. PROJECT CONFIGURATION
+# ==================================================
+
+ROOT = Path(__file__).resolve().parents[1]
+
+sys.path.insert(0, str(ROOT))
+
+from config.companies import REFRESH_INTERVAL_MINUTES
+
+BOOTSTRAP = os.getenv(
+    "KAFKA_BOOTSTRAP_SERVERS",
+    "localhost:9092"
+)
+
+TOPIC = os.getenv(
+    "KAFKA_TOPIC",
+    "raw-news-events"
+)
+
+INTERVAL = REFRESH_INTERVAL_MINUTES * 60
+
+TIMEOUT = int(
+    os.getenv("REQUEST_TIMEOUT", "30")
+)
+
+SPOOL = (
+    ROOT
+    / "data"
+    / "spool"
+    / "failed_news.jsonl"
+)
+
+
+# ==================================================
+# 2. FOUR RSS PUBLISHERS
+# ==================================================
+
+FEEDS = {
+    "Business Standard":
+        "https://www.business-standard.com/rss/latest.rss",
+
+    "Moneycontrol":
+        "https://www.moneycontrol.com/rss/latestnews.xml",
+
+    "CNBC-TV18":
+        "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml",
+
+    "Mint":
+        "https://www.livemint.com/rss/markets"
+}
+
+
+# ==================================================
+# 3. FIFTEEN TARGET COMPANIES
+# ==================================================
+
+COMPANY_ALIASES = {
+    "Reliance Industries": [
+        "Reliance Industries",
+        "Reliance Industries Limited",
+        "Reliance"
+    ],
+
+    "Tata Consultancy Services": [
+        "Tata Consultancy Services",
+        "TCS"
+    ],
+
+    "Infosys": [
+        "Infosys",
+        "Infosys Limited"
+    ],
+
+    "HDFC Bank": [
+        "HDFC Bank"
+    ],
+
+    "ICICI Bank": [
+        "ICICI Bank"
+    ],
+
+    "Tata Steel": [
+        "Tata Steel"
+    ],
+
+    "State Bank of India": [
+        "State Bank of India",
+        "SBI"
+    ],
+
+    "ITC": [
+        "ITC Limited",
+        "ITC"
+    ],
+
+    "Sun Pharmaceutical": [
+        "Sun Pharmaceutical",
+        "Sun Pharma",
+        "Sun Pharmaceutical Industries"
+    ],
+
+    "Bharti Airtel": [
+        "Bharti Airtel",
+        "Airtel"
+    ],
+
+    "Adani Enterprises": [
+        "Adani Enterprises",
+        "Adani Enterprises Limited"
+    ],
+
+    "Coal India": [
+        "Coal India",
+        "Coal India Limited"
+    ],
+
+    "Bajaj Finance": [
+        "Bajaj Finance",
+        "Bajaj Finance Limited"
+    ],
+
+    "Hindalco Industries": [
+        "Hindalco Industries",
+        "Hindalco"
+    ],
+
+    "Oil and Natural Gas Corporation": [
+        "Oil and Natural Gas Corporation",
+        "Oil & Natural Gas Corporation",
+        "ONGC"
+    ]
+}
+
+
+# ==================================================
+# 4. PRECOMPILE COMPANY SEARCH PATTERNS
+# ==================================================
+
+COMPANY_PATTERNS = {}
+
+for company, aliases in COMPANY_ALIASES.items():
+
+    COMPANY_PATTERNS[company] = [
+        re.compile(
+            r"(?<![A-Za-z0-9])"
+            + re.escape(alias)
+            + r"(?![A-Za-z0-9])",
+            re.IGNORECASE
+        )
+        for alias in aliases
+    ]
+
+
+# ==================================================
+# 5. LOGGING
+# ==================================================
+
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger("financial-news-producer")
+
+
+# ==================================================
+# 6. HTTP SESSION
+# ==================================================
+
+session = requests.Session()
+
+session.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
+    )
+})
+
+stopping = False
+
+
+# ==================================================
+# 7. STOP HANDLER
+# ==================================================
+
+def stop_handler(_signal, _frame):
+
+    global stopping
+
+    stopping = True
+
+    logger.info(
+        "Stop requested. Finishing current cycle."
+    )
+
+
+# ==================================================
+# 8. CONVERT RSS DATA TO JSON-SAFE VALUES
+# ==================================================
+
+def json_safe(value):
+
+    if isinstance(value, dict):
+
+        return {
+            str(key): json_safe(item)
+            for key, item in value.items()
+        }
+
+    if isinstance(value, (list, tuple)):
+
+        return [
+            json_safe(item)
+            for item in value
+        ]
+
+    if hasattr(value, "tm_year"):
+
+        try:
+
+            return time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ",
+                value
+            )
+
+        except Exception:
+
+            return str(value)
+
+    if value is None or isinstance(
+        value,
+        (str, int, float, bool)
+    ):
+
+        return value
+
+    return str(value)
+
+
+# ==================================================
+# 9. EXTRACT RSS TEXT FOR COMPANY MATCHING
+# ==================================================
+
+def clean_text(value):
+
+    if value is None:
+        return ""
+
+    if isinstance(value, dict):
+
+        return clean_text(
+            value.get("value", "")
+        )
+
+    if isinstance(value, (list, tuple)):
+
+        return " ".join(
+            clean_text(item)
+            for item in value
+        )
+
+    text = html.unescape(str(value))
+
+    text = re.sub(
+        r"<[^>]+>",
+        " ",
+        text
+    )
+
+    return " ".join(text.split())
+
+
+def get_searchable_text(entry):
+
+    parts = [
+        entry.get("title", ""),
+        entry.get("summary", ""),
+        entry.get("description", ""),
+        entry.get("content", [])
+    ]
+
+    return clean_text(" ".join(
+        clean_text(part)
+        for part in parts
+    ))
+
+
+# ==================================================
+# 10. FILTER FOR THE FIFTEEN COMPANIES
+# ==================================================
+
+def find_matching_companies(entry):
+
+    searchable_text = get_searchable_text(
+        entry
+    )
+
+    matched = []
+
+    for company, patterns in COMPANY_PATTERNS.items():
+
+        for pattern in patterns:
+
+            if pattern.search(searchable_text):
+
+                matched.append(company)
+
+                break
+
+    return matched
+
+
+# ==================================================
+# 11. GENERATE ARTICLE ID
+# ==================================================
+
+def generate_article_id(url, headline, source):
+
+    identity = (
+        url.strip()
+        or f"{source}|{headline.strip()}"
+    )
+
+    return hashlib.sha256(
+        identity.encode("utf-8")
+    ).hexdigest()
+
+
+# ==================================================
+# 12. FETCH ONE RSS SOURCE
+# ==================================================
+
+def fetch_feed(source, feed_url):
+
+    logger.info(
+        "Fetching RSS: %s",
+        source
+    )
+
+    try:
+
+        response = session.get(
+            feed_url,
+            timeout=TIMEOUT
+        )
+
+        response.raise_for_status()
+
+        parsed = feedparser.parse(
+            response.content
+        )
+
+        if parsed.bozo:
+
+            logger.warning(
+                "%s RSS parsing warning: %s",
+                source,
+                parsed.bozo_exception
+            )
+
+        records = []
+
+        total_entries = len(parsed.entries)
+
+        rejected = 0
+
+        for entry in parsed.entries:
+
+            headline = entry.get(
+                "title",
+                ""
+            ).strip()
+
+            url = entry.get(
+                "link",
+                ""
+            ).strip()
+
+            if not headline or not url:
+
+                rejected += 1
+
+                continue
+
+            # Check RSS headline, description and content.
+            matched_companies = find_matching_companies(
+                entry
+            )
+
+            # Do not publish unrelated articles.
+            if not matched_companies:
+
+                rejected += 1
+
+                continue
+
+            article_id = generate_article_id(
+                url,
+                headline,
+                source
+            )
+
+            # Preserve the original RSS information.
+            record = {
+
+                "article_id": article_id,
+
+                "source": source,
+
+                "headline": headline,
+
+                "url": url,
+
+                "published_at": entry.get(
+                    "published",
+                    entry.get("updated", "")
+                ),
+
+                "description": entry.get(
+                    "summary",
+                    entry.get("description", "")
+                ),
+
+                "raw_content": json_safe(
+                    entry.get("content", [])
+                ),
+
+                "raw_rss_entry": json_safe(
+                    dict(entry)
+                ),
+
+                "ingested_at": datetime.now(
+                    timezone.utc
+                ).isoformat()
+
+            }
+
+            records.append(record)
+
+        logger.info(
+            "%s | RSS entries=%d | Matching=%d | Excluded=%d",
+            source,
+            total_entries,
+            len(records),
+            rejected
+        )
+
+        return records
+
+    except requests.RequestException:
+
+        logger.exception(
+            "%s RSS request failed",
+            source
+        )
+
+    except Exception:
+
+        logger.exception(
+            "Unexpected error while processing %s",
+            source
+        )
+
+    return []
+
+
+# ==================================================
+# 13. FETCH ALL FOUR PUBLISHERS
+# ==================================================
+
+def fetch_all_sources():
+
+    all_records = []
+
+    for source, feed_url in FEEDS.items():
+
+        records = fetch_feed(
+            source,
+            feed_url
+        )
+
+        all_records.extend(records)
+
+    logger.info(
+        "Total matching news articles: %d",
+        len(all_records)
+    )
+
+    return all_records
+
+
+# ==================================================
+# 14. CREATE KAFKA PRODUCER
+# ==================================================
+
+def create_producer():
+
+    return KafkaProducer(
+
+        bootstrap_servers=BOOTSTRAP,
+
+        key_serializer=lambda key:
+            key.encode("utf-8") if key else None,
+
+        value_serializer=lambda value:
+            json.dumps(
+                value,
+                ensure_ascii=False,
+                default=str
+            ).encode("utf-8"),
+
+        acks="all",
+
+        retries=10,
+
+        max_in_flight_requests_per_connection=1,
+
+        request_timeout_ms=30000,
+
+        delivery_timeout_ms=120000
+
+    )
+
+
+# ==================================================
+# 15. SAVE FAILED MESSAGES LOCALLY
+# ==================================================
+
+def spool_record(record):
+
+    SPOOL.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with SPOOL.open(
+        "a",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            json.dumps(
+                record,
+                ensure_ascii=False,
+                default=str
+            ) + "\n"
+        )
+
+
+# ==================================================
+# 16. REPLAY FAILED MESSAGES
+# ==================================================
+
+def replay_spool(producer):
+
+    if not SPOOL.exists():
+        return
+
+    temporary_file = SPOOL.with_suffix(
+        ".tmp"
+    )
+
+    replayed = 0
+
+    remaining = 0
+
+    with SPOOL.open(
+        "r",
+        encoding="utf-8"
+    ) as source, temporary_file.open(
+        "w",
+        encoding="utf-8"
+    ) as pending:
+
+        for line in source:
+
+            if not line.strip():
+                continue
+
+            try:
+
+                record = json.loads(line)
+
+                producer.send(
+                    TOPIC,
+                    key=record.get("article_id"),
+                    value=record
+                ).get(timeout=60)
+
+                replayed += 1
+
+            except Exception:
+
+                logger.exception(
+                    "Failed to replay buffered message"
+                )
+
+                pending.write(line)
+
+                remaining += 1
+
+    if remaining:
+
+        temporary_file.replace(SPOOL)
+
+    else:
+
+        temporary_file.unlink(
+            missing_ok=True
+        )
+
+        SPOOL.unlink(
+            missing_ok=True
+        )
+
+    logger.info(
+        "Spool replay | Replayed=%d | Remaining=%d",
+        replayed,
+        remaining
+    )
+
+
+# ==================================================
+# 17. PUBLISH MATCHING NEWS TO KAFKA
+# ==================================================
+
+def publish_records(producer, records):
+
+    published = 0
+
+    failed = 0
+
+    for record in records:
+
+        try:
+
+            producer.send(
+
+                TOPIC,
+
+                key=record["article_id"],
+
+                value=record
+
+            ).get(timeout=60)
+
+            published += 1
+
+        except Exception:
+
+            logger.exception(
+                "Kafka publishing failed. Buffering message."
+            )
+
+            spool_record(record)
+
+            failed += 1
+
+    producer.flush()
+
+    logger.info(
+        "Publishing result | Published=%d | Buffered=%d",
+        published,
+        failed
+    )
+
+
+# ==================================================
+# 18. COLLECTION CYCLE
+# ==================================================
+
+def run_collection_cycle(producer, cycle_name):
+
+    logger.info(
+        "========== %s ==========",
+        cycle_name
+    )
+
+    # Replay previously failed messages first.
+    replay_spool(producer)
+
+    # Fetch matching news from four publishers.
+    records = fetch_all_sources()
+
+    # Publish only matching records.
+    publish_records(
+        producer,
+        records
+    )
+
+    logger.info(
+        "%s completed successfully.",
+        cycle_name
+    )
+
+
+# ==================================================
+# 19. MAIN EXECUTION
+# ==================================================
 
 def main():
 
-    files = list(BRONZE_DIR.rglob("*.parquet"))
+    global stopping
 
-    if not files:
-        print("No Parquet files found.")
-        return
+    signal.signal(
+        signal.SIGINT,
+        stop_handler
+    )
 
-    frames = []
+    if hasattr(signal, "SIGTERM"):
 
-    for file in files:
-        table = pq.read_table(file)
-        frames.append(table.to_pandas())
+        signal.signal(
+            signal.SIGTERM,
+            stop_handler
+        )
 
-    df = pd.concat(frames, ignore_index=True)
+    producer = None
 
-    # Verify Bronze schema
-    missing = set(EXPECTED_COLUMNS) - set(df.columns)
+    try:
 
-    if missing:
-        print("Missing Bronze columns:", missing)
-        return
+        logger.info(
+            "Financial News RSS Producer starting."
+        )
 
-    df = df[EXPECTED_COLUMNS]
+        logger.info(
+            "Kafka: %s",
+            BOOTSTRAP
+        )
 
-    print("\n========== BRONZE PARQUET TABLE ==========")
-    print("Total records:", len(df))
-    print("Total files:", len(files))
+        logger.info(
+            "Kafka topic: %s",
+            TOPIC
+        )
 
-    pd.set_option("display.max_columns", None)
-    pd.set_option("display.max_colwidth", 100)
-    pd.set_option("display.width", 250)
+        logger.info(
+            "Target companies: %d",
+            len(COMPANY_ALIASES)
+        )
 
-    print(df.to_string(index=False))
+        logger.info(
+            "RSS publishers: %d",
+            len(FEEDS)
+        )
 
-    # Save table for opening in Excel
-    output = ROOT / "data" / "bronze" / "bronze_table.csv"
-    df.to_csv(output, index=False, encoding="utf-8-sig")
+        logger.info(
+            "Refresh interval: %d minutes",
+            REFRESH_INTERVAL_MINUTES
+        )
 
-    print("\nBronze table saved:", output)
+        producer = create_producer()
 
+        logger.info(
+            "Connected to Kafka."
+        )
+
+        # Initial baseline.
+        run_collection_cycle(
+            producer,
+            "INITIAL BASELINE"
+        )
+
+        # Poll every 15 minutes.
+        while not stopping:
+
+            logger.info(
+                "Next refresh in %d minutes.",
+                REFRESH_INTERVAL_MINUTES
+            )
+
+            for _ in range(INTERVAL):
+
+                if stopping:
+                    break
+
+                time.sleep(1)
+
+            if not stopping:
+
+                run_collection_cycle(
+                    producer,
+                    "15-MINUTE REFRESH"
+                )
+
+    except KafkaError:
+
+        logger.exception(
+            "Kafka producer error."
+        )
+
+        raise
+
+    finally:
+
+        if producer is not None:
+
+            producer.flush(
+                timeout=30
+            )
+
+            producer.close(
+                timeout=30
+            )
+
+        session.close()
+
+        logger.info(
+            "Financial News Producer stopped."
+        )
+
+
+# ==================================================
+# 20. ENTRY POINT
+# ==================================================
 
 if __name__ == "__main__":
+
     main()
     
