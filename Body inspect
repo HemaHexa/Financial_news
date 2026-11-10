@@ -1,0 +1,39 @@
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+headers = {"User-Agent": "Mozilla/5.0"}
+
+response = requests.get(URL, headers=headers, timeout=20)
+soup = BeautifulSoup(response.text, "html.parser")
+
+article = soup.find("article")
+
+with open("article_inspection.txt", "w", encoding="utf-8") as file:
+
+    file.write("========== ARTICLE DESCENDANTS ==========\n")
+
+    if article:
+        for tag in article.find_all(["div", "section", "p"]):
+            text = tag.get_text(" ", strip=True)
+            classes = tag.get("class", [])
+
+            if len(text) > 100:
+                file.write(
+                    f"\nTAG: {tag.name}\n"
+                    f"CLASS: {classes}\n"
+                    f"TEXT LENGTH: {len(text)}\n"
+                    f"TEXT PREVIEW: {text[:500]}\n"
+                )
+
+    file.write("\n========== ARTICLE PARAGRAPHS ==========\n")
+
+    if article:
+        for i, p in enumerate(article.find_all("p"), 1):
+            text = p.get_text(" ", strip=True)
+            if text:
+                file.write(f"\n{i}. {text}\n")
+
+print("Inspection saved to article_inspection.txt")
