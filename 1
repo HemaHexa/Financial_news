@@ -1,148 +1,27 @@
 
-import json
-import logging
-import uuid
-from datetime import datetime, timezone
 from pathlib import Path
+import pandas as pd
 
-import pyarrow as pa
-import pyarrow.parquet as pq
-from kafka import KafkaConsumer
+BRONZE_PATH = Path("data/bronze/news_history")
 
+files = sorted(BRONZE_PATH.glob("*.parquet"))
 
-# CONFIGURATION
+if not files:
+    print("No Parquet files found yet!")
+else:
+    print(f"Found {len(files)} Parquet files")
 
-ROOT = Path(__file__).resolve().parent.parent
+    for file in files:
+        print(f"\nReading: {file.name}")
 
-BOOTSTRAP_SERVERS = "localhost:9092"
-TOPIC = "raw-news-events"
-GROUP_ID = "financial-news-bronze-python"
+        df = pd.read_parquet(file, engine="pyarrow")
 
-BRONZE_PATH = ROOT / "data" / "bronze" / "news_history"
+        print("Rows:", len(df))
+        print("\nColumns:")
+        print(df.columns.tolist())
 
-BATCH_SIZE = 100
-POLL_TIMEOUT_MS = 1000
+        print("\nNews records:")
+        print(df.to_string(index=False))
 
-BRONZE_PATH.mkdir(parents=True, exist_ok=True)
-
-
-# LOGGING
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
-
-logger = logging.getLogger("BronzeConsumer")
-
-
-# BRONZE SCHEMA: SIX COLUMNS
-
-SCHEMA = pa.schema([
-    ("kafka_key", pa.string()),
-    ("raw_json", pa.string()),
-    ("topic", pa.string()),
-    ("partition", pa.int32()),
-    ("offset", pa.int64()),
-    ("kafka_ts", pa.timestamp("ms", tz="UTC")),
-])
-
-
-def write_parquet(messages):
-    """Write a batch of raw Kafka messages to Parquet."""
-
-    rows = []
-
-    for message in messages:
-        kafka_ts = None
-
-        if message.timestamp is not None:
-            kafka_ts = datetime.fromtimestamp(
-                message.timestamp / 1000,
-                tz=timezone.utc
-            )
-
-        rows.append({
-            "kafka_key": (
-                message.key.decode("utf-8")
-                if message.key is not None else None
-            ),
-            "raw_json": message.value.decode("utf-8"),
-            "topic": message.topic,
-            "partition": message.partition,
-            "offset": message.offset,
-            "kafka_ts": kafka_ts,
-        })
-
-    table = pa.Table.from_pylist(rows, schema=SCHEMA)
-
-    filename = (
-        f"news_{datetime.now(timezone.utc):%Y%m%d_%H%M%S_%f}_"
-        f"{uuid.uuid4().hex[:8]}.parquet"
-    )
-
-    output_file = BRONZE_PATH / filename
-
-    pq.write_table(
-        table,
-        output_file,
-        compression="snappy"
-    )
-
-    logger.info(
-        "Bronze batch saved | Records: %s | File: %s",
-        len(rows),
-        output_file.name
-    )
-
-
-def main():
-
-    logger.info("Starting Python Bronze Consumer")
-    logger.info("Kafka: %s | Topic: %s", BOOTSTRAP_SERVERS, TOPIC)
-    logger.info("Bronze output: %s", BRONZE_PATH)
-
-    consumer = KafkaConsumer(
-        bootstrap_servers=BOOTSTRAP_SERVERS,
-        group_id=GROUP_ID,
-        auto_offset_reset="earliest",
-        enable_auto_commit=False,
-        consumer_timeout_ms=0
-    )
-
-    consumer.subscribe([TOPIC])
-
-    batch = []
-
-    try:
-        logger.info("Waiting for Kafka messages...")
-
-        while True:
-            records = consumer.poll(
-                timeout_ms=POLL_TIMEOUT_MS,
-                max_records=BATCH_SIZE
-            )
-
-            for partition_messages in records.values():
-                batch.extend(partition_messages)
-
-            if len(batch) >= BATCH_SIZE:
-                write_parquet(batch)
-                consumer.commit()
-                batch.clear()
-
-    except KeyboardInterrupt:
-        logger.info("Stopping Bronze Consumer...")
-
-    finally:
-        if batch:
-            write_parquet(batch)
-            consumer.commit()
-
-        consumer.close()
-        logger.info("Bronze Consumer stopped.")
-
-
-if __name__ == "__main__":
-    main()
-    
+        print("\n" + "=" * 80)
+        
