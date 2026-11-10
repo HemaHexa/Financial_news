@@ -12,6 +12,54 @@ response = requests.get(
 
 soup = BeautifulSoup(response.text, "html.parser")
 
+body = soup.find("div", class_="storycontent")
+
+if body:
+    print("DIRECT CHILD ELEMENTS\n")
+
+    for child in body.find_all(recursive=False):
+        text = child.get_text(" ", strip=True)
+
+        if text:
+            print("TAG:", child.name)
+            print("CLASS:", child.get("class"))
+            print("TEXT:", text[:500])
+            print("-" * 60)
+else:
+    print("Article body not found")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+response = requests.get(
+    URL,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+
+soup = BeautifulSoup(response.text, "html.parser")
+
 article_body = soup.find(
     "div",
     class_="storycontent"
