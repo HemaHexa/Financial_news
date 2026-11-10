@@ -1,0 +1,81 @@
+
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import re
+
+BASE_URL = "https://www.business-standard.com"
+PAGE_URL = BASE_URL + "/companies/news"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+KEYWORDS = [
+    "Reliance Industries",
+    "Reliance Industries Limited",
+    "Reliance"
+]
+
+session = requests.Session()
+session.headers.update(HEADERS)
+
+response = session.get(PAGE_URL, timeout=20)
+response.raise_for_status()
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+candidates = {}
+
+# Discover Reliance-related article links
+for a in soup.find_all("a", href=True):
+    headline = a.get_text(" ", strip=True)
+    url = urljoin(BASE_URL, a["href"])
+
+    if "/companies/news/" not in url:
+        continue
+
+    if any(word.lower() in headline.lower() for word in KEYWORDS):
+        candidates[url] = headline
+
+print("RELIANCE ARTICLES FOUND:", len(candidates))
+
+for url, headline in candidates.items():
+    print("\n" + "=" * 70)
+    print("HEADLINE:", headline)
+    print("URL:", url)
+
+    try:
+        article_response = session.get(url, timeout=20)
+        article_response.raise_for_status()
+
+        article_soup = BeautifulSoup(
+            article_response.text, "html.parser"
+        )
+
+        dates = []
+
+        # First inspect structured publication-date elements
+        for tag in article_soup.find_all(["time", "meta"]):
+            value = (
+                tag.get("datetime")
+                or tag.get("content")
+            )
+
+            if value and re.search(r"202[0-9]", value):
+                dates.append(value)
+
+        # Then inspect visible date text
+        page_text = article_soup.get_text(" ", strip=True)
+
+        date_patterns = re.findall(
+            r"(?:First Published|Updated|Published)[:\s]+.{0,60}",
+            page_text,
+            flags=re.IGNORECASE
+        )
+
+        print("STRUCTURED DATES:", dates[:5])
+        print("VISIBLE DATE TEXT:", date_patterns[:5])
+
+    except requests.RequestException as error:
+        print("ARTICLE ERROR:", error)
