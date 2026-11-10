@@ -1,3 +1,323 @@
+C:\>dir C:\spark-4.3.0-bin-hadoop3\jars\*hadoop*           
+ Volume in drive C has no label.
+ Volume Serial Number is 56F3-EAA1
+
+ Directory of C:\spark-4.3.0-bin-hadoop3\jars
+
+27-10-2026  06:32            15,935 dropwizard-metrics-hadoop-metrics2-reporter-0.1.2.jar
+27-10-2026  06:32        19,811,352 hadoop-client-api-3.5.0.jar
+27-10-2026  06:32        30,082,430 hadoop-client-runtime-3.5.0.jar
+27-10-2026  06:32         1,637,054 parquet-hadoop-1.17.0.jar
+               4 File(s)     51,546,771 bytes
+               0 Dir(s)  346,581,463,040 bytes free
+
+C:\>dir C:\spark-4.3.0-bin-hadoop3\jars         
+ Volume in drive C has no label.
+ Volume Serial Number is 56F3-EAA1
+
+ Directory of C:\spark-4.3.0-bin-hadoop3\jars
+
+27-10-2026  06:32    <DIR>          .
+27-10-2026  06:32    <DIR>          ..
+27-10-2026  06:32           255,256 aircompressor-2.0.3.jar
+27-10-2026  06:32         1,662,620 algebra_2.13-2.8.0.jar
+27-10-2026  06:32           167,761 antlr-runtime-3.5.2.jar
+27-10-2026  06:32           326,305 antlr4-runtime-4.13.1.jar
+27-10-2026  06:32            27,419 aopalliance-repackaged-3.0.6.jar
+27-10-2026  06:32           199,147 arpack-3.2.0.jar
+27-10-2026  06:32         1,194,003 arpack_combined_all-0.1.jar
+27-10-2026  06:32            14,797 arrow-compression-19.0.0.jar
+27-10-2026  06:32           121,518 arrow-format-19.0.0.jar
+27-10-2026  06:32           118,167 arrow-memory-core-19.0.0.jar
+27-10-2026  06:32            10,829 arrow-memory-netty-19.0.0.jar
+27-10-2026  06:32            32,356 arrow-memory-netty-buffer-patch-19.0.0.jar
+27-10-2026  06:32         1,594,858 arrow-vector-19.0.0.jar
+27-10-2026  06:32            20,891 audience-annotations-0.12.0.jar
+27-10-2026  06:32           718,936 avro-1.12.1.jar
+27-10-2026  06:32           192,853 avro-ipc-1.12.1.jar
+27-10-2026  06:32           189,536 avro-mapred-1.12.1.jar
+27-10-2026  06:32           284,830 blas-3.2.0.jar
+27-10-2026  06:32            81,671 breeze-macros_2.13-2.1.0.jar
+27-10-2026  06:32        13,334,870 breeze_2.13-2.1.0.jar
+27-10-2026  06:32         5,339,598 cats-kernel_2.13-2.8.0.jar
+27-10-2026  06:32            58,683 chill-java-0.10.0.jar
+27-10-2026  06:32           212,772 chill_2.13-0.10.0.jar
+27-10-2026  06:32           110,167 commons-cli-1.11.0.jar
+27-10-2026  06:32           420,480 commons-codec-1.22.0.jar
+27-10-2026  06:32           898,652 commons-collections4-4.5.0.jar
+27-10-2026  06:32           173,752 commons-compiler-3.1.9.jar
+27-10-2026  06:32         1,117,221 commons-compress-1.28.0.jar
+27-10-2026  06:32           166,244 commons-crypto-1.1.0.jar
+27-10-2026  06:32           160,519 commons-dbcp-1.4.jar
+27-10-2026  06:32           609,182 commons-io-2.22.0.jar
+27-10-2026  06:32           284,220 commons-lang-2.6.jar
+27-10-2026  06:32           713,862 commons-lang3-3.20.0.jar
+27-10-2026  06:32         2,213,560 commons-math3-3.6.1.jar
+27-10-2026  06:32            96,221 commons-pool-1.5.4.jar
+27-10-2026  06:32           264,873 commons-text-1.15.0.jar
+27-10-2026  06:32            85,617 compress-lzf-1.2.0.jar
+27-10-2026  06:32    <DIR>          connect-repl
+27-10-2026  06:32         3,274,774 curator-client-5.9.0.jar
+27-10-2026  06:32           343,451 curator-framework-5.9.0.jar
+27-10-2026  06:32           318,709 curator-recipes-5.9.0.jar
+27-10-2026  06:32           366,748 datanucleus-api-jdo-4.2.4.jar
+27-10-2026  06:32         2,016,766 datanucleus-core-4.1.17.jar
+27-10-2026  06:32         1,908,681 datanucleus-rdbms-4.1.19.jar
+27-10-2026  06:32         1,022,777 datasketches-java-6.2.0.jar
+27-10-2026  06:32           109,882 datasketches-memory-3.0.2.jar
+27-10-2026  06:32         3,538,107 derby-10.16.1.1.jar
+27-10-2026  06:32            88,705 derbyshared-10.16.1.1.jar
+27-10-2026  06:32           252,754 derbytools-10.16.1.1.jar
+27-10-2026  06:32            15,935 dropwizard-metrics-hadoop-metrics2-reporter-0.1.2.jar
+27-10-2026  06:32            10,763 failureaccess-1.0.3.jar
+27-10-2026  06:32           110,881 flatbuffers-java-25.2.10.jar
+27-10-2026  06:32           289,901 gson-2.13.2.jar
+27-10-2026  06:32         3,064,793 guava-33.6.0-jre.jar
+27-10-2026  06:32        19,811,352 hadoop-client-api-3.5.0.jar
+27-10-2026  06:32        30,082,430 hadoop-client-runtime-3.5.0.jar
+27-10-2026  06:32           136,363 HikariCP-2.5.1.jar
+27-10-2026  06:32           183,850 hive-beeline-2.3.10.jar
+27-10-2026  06:32            44,798 hive-cli-2.3.10.jar
+27-10-2026  06:32           447,633 hive-common-2.3.10.jar
+27-10-2026  06:32        10,851,509 hive-exec-2.3.10-core.jar
+27-10-2026  06:32           116,988 hive-jdbc-2.3.10.jar
+27-10-2026  06:32         8,338,732 hive-metastore-2.3.10.jar
+27-10-2026  06:32           917,902 hive-serde-2.3.10.jar
+27-10-2026  06:32         1,810,036 hive-service-rpc-4.0.0.jar
+27-10-2026  06:32            54,374 hive-shims-0.23-2.3.10.jar
+27-10-2026  06:32             9,014 hive-shims-2.3.10.jar
+27-10-2026  06:32           121,491 hive-shims-common-2.3.10.jar
+27-10-2026  06:32            13,169 hive-shims-scheduler-2.3.10.jar
+27-10-2026  06:32           258,346 hive-storage-api-2.8.1.jar
+27-10-2026  06:32           207,576 hk2-api-3.0.6.jar
+27-10-2026  06:32           205,288 hk2-locator-3.0.6.jar
+27-10-2026  06:32           132,025 hk2-utils-3.0.6.jar
+27-10-2026  06:32           785,639 httpclient-4.5.14.jar
+27-10-2026  06:32           327,891 httpcore-4.4.16.jar
+27-10-2026  06:32        15,156,073 icu4j-78.3.jar
+27-10-2026  06:32            25,788 istack-commons-runtime-4.1.2.jar
+27-10-2026  06:32         1,413,203 ivy-2.5.3.jar
+27-10-2026  06:32            82,104 jackson-annotations-2.21.jar
+27-10-2026  06:32           595,531 jackson-core-2.21.2.jar
+27-10-2026  06:32         1,701,926 jackson-databind-2.21.2.jar
+27-10-2026  06:32            60,604 jackson-dataformat-yaml-2.21.2.jar
+27-10-2026  06:32           136,578 jackson-datatype-jsr310-2.21.2.jar
+27-10-2026  06:32           553,625 jackson-module-scala_2.13-2.21.2.jar
+27-10-2026  06:32            67,380 jakarta.activation-api-2.1.4.jar
+27-10-2026  06:32            26,141 jakarta.annotation-api-2.1.1.jar
+27-10-2026  06:32            10,681 jakarta.inject-api-2.0.1.jar
+27-10-2026  06:32           347,613 jakarta.servlet-api-6.0.0.jar
+27-10-2026  06:32            93,298 jakarta.validation-api-3.0.2.jar
+27-10-2026  06:32           154,815 jakarta.ws.rs-api-3.1.0.jar
+27-10-2026  06:32           131,219 jakarta.xml.bind-api-4.0.5.jar
+27-10-2026  06:32           958,840 janino-3.1.9.jar
+27-10-2026  06:32            78,743 java-diff-utils-4.16.jar
+27-10-2026  06:32           794,714 javassist-3.30.2-GA.jar
+27-10-2026  06:32           249,790 javax.jdo-3.2.0-m3.jar
+27-10-2026  06:32            95,505 javax.servlet-api-4.0.1.jar
+27-10-2026  06:32           395,195 javolution-5.5.1.jar
+27-10-2026  06:32           137,909 jaxb-core-4.0.6.jar
+27-10-2026  06:32           920,148 jaxb-runtime-4.0.6.jar
+27-10-2026  06:32            18,423 jcl-over-slf4j-2.0.17.jar
+27-10-2026  06:32           201,124 jdo-api-3.0.1.jar
+27-10-2026  06:32           307,581 jersey-client-3.1.11.jar
+27-10-2026  06:32         1,261,921 jersey-common-3.1.11.jar
+27-10-2026  06:32            33,056 jersey-container-servlet-3.1.11.jar
+27-10-2026  06:32            75,563 jersey-container-servlet-core-3.1.11.jar
+27-10-2026  06:32            78,054 jersey-hk2-3.1.11.jar
+27-10-2026  06:32           982,652 jersey-server-3.1.11.jar
+27-10-2026  06:32           140,754 jjwt-api-0.13.0.jar
+27-10-2026  06:32           482,009 jjwt-impl-0.13.0.jar
+27-10-2026  06:32             9,431 jjwt-jackson-0.13.0.jar
+27-10-2026  06:32           232,470 JLargeArrays-1.5.jar
+27-10-2026  06:32           268,780 jline-2.14.6.jar
+27-10-2026  06:32         1,371,851 jline-3.29.0-jdk8.jar
+27-10-2026  06:32           639,617 joda-time-2.14.1.jar
+27-10-2026  06:32            12,131 jpam-1.1.jar
+27-10-2026  06:32            25,475 json-1.8.jar
+27-10-2026  06:32           601,450 json4s-ast_2.13-4.0.7.jar
+27-10-2026  06:32           322,729 json4s-core_2.13-4.0.7.jar
+27-10-2026  06:32            25,340 json4s-jackson-core_2.13-4.0.7.jar
+27-10-2026  06:32            13,609 json4s-jackson_2.13-4.0.7.jar
+27-10-2026  06:32           360,050 json4s-scalap_2.13-4.0.7.jar
+27-10-2026  06:32            33,031 jsr305-3.0.0.jar
+27-10-2026  06:32            15,071 jta-1.1.jar
+27-10-2026  06:32         1,175,798 JTransforms-3.1.jar
+27-10-2026  06:32         1,239,978 jts-core-1.20.0.jar
+27-10-2026  06:32             6,349 jul-to-slf4j-2.0.17.jar
+27-10-2026  06:32           410,942 kryo-shaded-4.0.3.jar
+27-10-2026  06:32           407,830 kubernetes-client-7.6.1.jar
+27-10-2026  06:32           507,152 kubernetes-client-api-7.6.1.jar
+27-10-2026  06:32            31,289 kubernetes-httpclient-vertx-7.6.1.jar
+27-10-2026  06:32         1,294,969 kubernetes-model-admissionregistration-7.6.1.jar
+27-10-2026  06:32           595,841 kubernetes-model-apiextensions-7.6.1.jar
+27-10-2026  06:32           336,958 kubernetes-model-apps-7.6.1.jar
+27-10-2026  06:32           782,675 kubernetes-model-autoscaling-7.6.1.jar
+27-10-2026  06:32           252,084 kubernetes-model-batch-7.6.1.jar
+27-10-2026  06:32           221,386 kubernetes-model-certificates-7.6.1.jar
+27-10-2026  06:32            62,931 kubernetes-model-common-7.6.1.jar
+27-10-2026  06:32            99,074 kubernetes-model-coordination-7.6.1.jar
+27-10-2026  06:32         3,277,895 kubernetes-model-core-7.6.1.jar
+27-10-2026  06:32           166,792 kubernetes-model-discovery-7.6.1.jar
+27-10-2026  06:32            80,752 kubernetes-model-events-7.6.1.jar
+27-10-2026  06:32           608,974 kubernetes-model-extensions-7.6.1.jar
+27-10-2026  06:32           875,647 kubernetes-model-flowcontrol-7.6.1.jar
+27-10-2026  06:32         1,356,318 kubernetes-model-gatewayapi-7.6.1.jar
+27-10-2026  06:32            60,773 kubernetes-model-metrics-7.6.1.jar
+27-10-2026  06:32           564,203 kubernetes-model-networking-7.6.1.jar
+27-10-2026  06:32           132,004 kubernetes-model-node-7.6.1.jar
+27-10-2026  06:32           280,749 kubernetes-model-policy-7.6.1.jar
+27-10-2026  06:32           147,474 kubernetes-model-rbac-7.6.1.jar
+27-10-2026  06:32         1,837,800 kubernetes-model-resource-7.6.1.jar
+27-10-2026  06:32           145,520 kubernetes-model-scheduling-7.6.1.jar
+27-10-2026  06:32           576,488 kubernetes-model-storageclass-7.6.1.jar
+27-10-2026  06:32         2,161,542 lapack-3.2.0.jar
+27-10-2026  06:32         1,045,744 leveldbjni-all-1.8.jar
+27-10-2026  06:32           313,702 libfb303-0.9.3.jar
+27-10-2026  06:32           345,167 libthrift-0.16.0.jar
+27-10-2026  06:32           359,214 log4j-1.2-api-2.25.4.jar
+27-10-2026  06:32           351,127 log4j-api-2.25.4.jar
+27-10-2026  06:32         2,023,860 log4j-core-2.25.4.jar
+27-10-2026  06:32           231,104 log4j-layout-template-json-2.25.4.jar
+27-10-2026  06:32            30,211 log4j-slf4j2-impl-2.25.4.jar
+27-10-2026  06:32           896,932 lz4-java-1.11.0.jar
+27-10-2026  06:32           131,928 metrics-core-4.2.37.jar
+27-10-2026  06:32            24,109 metrics-graphite-4.2.37.jar
+27-10-2026  06:32            21,753 metrics-jmx-4.2.37.jar
+27-10-2026  06:32            17,178 metrics-json-4.2.37.jar
+27-10-2026  06:32            24,835 metrics-jvm-4.2.37.jar
+27-10-2026  06:32             5,711 minlog-1.3.0.jar
+27-10-2026  06:32             4,924 netty-all-4.2.13.Final.jar
+27-10-2026  06:32           371,633 netty-buffer-4.2.13.Final.jar
+27-10-2026  06:32             3,951 netty-codec-4.2.13.Final.jar
+27-10-2026  06:32           152,909 netty-codec-base-4.2.13.Final.jar
+27-10-2026  06:32           182,856 netty-codec-compression-4.2.13.Final.jar
+27-10-2026  06:32            71,116 netty-codec-dns-4.2.13.Final.jar
+27-10-2026  06:32           674,478 netty-codec-http-4.2.13.Final.jar
+27-10-2026  06:32           492,407 netty-codec-http2-4.2.13.Final.jar
+27-10-2026  06:32           132,177 netty-codec-socks-4.2.13.Final.jar
+27-10-2026  06:32           817,850 netty-common-4.2.13.Final.jar
+27-10-2026  06:32           583,738 netty-handler-4.2.13.Final.jar
+27-10-2026  06:32            26,734 netty-handler-proxy-4.2.13.Final.jar
+27-10-2026  06:32            32,975 netty-resolver-4.2.13.Final.jar
+27-10-2026  06:32           173,924 netty-resolver-dns-4.2.13.Final.jar
+27-10-2026  06:32         1,289,245 netty-tcnative-boringssl-static-2.0.76.Final-linux-aarch_64.jar
+27-10-2026  06:32         1,386,687 netty-tcnative-boringssl-static-2.0.76.Final-linux-x86_64.jar
+27-10-2026  06:32         1,146,642 netty-tcnative-boringssl-static-2.0.76.Final-osx-aarch_64.jar
+27-10-2026  06:32         1,253,776 netty-tcnative-boringssl-static-2.0.76.Final-osx-x86_64.jar
+27-10-2026  06:32         1,156,091 netty-tcnative-boringssl-static-2.0.76.Final-windows-x86_64.jar
+27-10-2026  06:32            37,385 netty-tcnative-classes-2.0.76.Final.jar
+27-10-2026  06:32           549,604 netty-transport-4.2.13.Final.jar
+27-10-2026  06:32           159,935 netty-transport-classes-epoll-4.2.13.Final.jar
+27-10-2026  06:32           116,797 netty-transport-classes-kqueue-4.2.13.Final.jar
+27-10-2026  06:32            43,712 netty-transport-native-epoll-4.2.13.Final-linux-aarch_64.jar
+27-10-2026  06:32            37,994 netty-transport-native-epoll-4.2.13.Final-linux-riscv64.jar
+27-10-2026  06:32            42,221 netty-transport-native-epoll-4.2.13.Final-linux-x86_64.jar
+27-10-2026  06:32            27,214 netty-transport-native-kqueue-4.2.13.Final-osx-aarch_64.jar
+27-10-2026  06:32            26,471 netty-transport-native-kqueue-4.2.13.Final-osx-x86_64.jar
+27-10-2026  06:32            46,872 netty-transport-native-unix-common-4.2.13.Final.jar
+27-10-2026  06:32            49,459 objenesis-3.5.jar
+27-10-2026  06:32            19,827 opencsv-2.3.jar
+27-10-2026  06:32         2,632,868 orc-core-2.3.0-shaded-protobuf.jar
+27-10-2026  06:32         2,325,472 orc-format-1.1.1-shaded-protobuf.jar
+27-10-2026  06:32         1,913,326 orc-mapreduce-2.3.0-shaded-protobuf.jar
+27-10-2026  06:32            28,084 orc-shims-2.3.0.jar
+27-10-2026  06:32            65,261 oro-2.0.8.jar
+27-10-2026  06:32            19,479 osgi-resource-locator-1.0.3.jar
+27-10-2026  06:32            37,899 paranamer-2.8.3.jar
+27-10-2026  06:32         3,350,509 parquet-column-1.17.0.jar
+27-10-2026  06:32           123,538 parquet-common-1.17.0.jar
+27-10-2026  06:32           834,068 parquet-encoding-1.17.0.jar
+27-10-2026  06:32           834,048 parquet-format-structures-1.17.0.jar
+27-10-2026  06:32         1,637,054 parquet-hadoop-1.17.0.jar
+27-10-2026  06:32         2,406,179 parquet-jackson-1.17.0.jar
+27-10-2026  06:32            54,836 pickle-1.5.jar
+27-10-2026  06:32           125,939 py4j-0.10.9.9.jar
+27-10-2026  06:32           474,620 RoaringBitmap-1.6.10.jar
+27-10-2026  06:32        71,683,718 rocksdbjni-9.8.4.jar
+27-10-2026  06:32        12,343,847 scala-compiler-2.13.18.jar
+27-10-2026  06:32         5,940,741 scala-library-2.13.18.jar
+27-10-2026  06:32         1,120,803 scala-parallel-collections_2.13-1.2.0.jar
+27-10-2026  06:32           189,196 scala-parser-combinators_2.13-2.4.0.jar
+27-10-2026  06:32         3,814,367 scala-reflect-2.13.18.jar
+27-10-2026  06:32           550,879 scala-xml_2.13-2.4.0.jar
+27-10-2026  06:32            69,908 slf4j-api-2.0.17.jar
+27-10-2026  06:32           340,015 snakeyaml-2.5.jar
+27-10-2026  06:32           299,438 snakeyaml-engine-3.0.1.jar
+27-10-2026  06:32         2,445,419 snappy-java-1.1.10.8.jar
+27-10-2026  06:32        20,016,241 spark-catalyst_2.13-4.3.0.jar
+27-10-2026  06:32            85,014 spark-common-utils-java_2.13-4.3.0.jar
+27-10-2026  06:32           605,625 spark-common-utils_2.13-4.3.0.jar
+27-10-2026  06:32         1,909,808 spark-config_2.13-4.3.0.jar
+27-10-2026  06:32        14,440,895 spark-connect_2.13-4.3.0.jar
+27-10-2026  06:32        16,394,084 spark-core_2.13-4.3.0.jar
+27-10-2026  06:32           432,229 spark-graphx_2.13-4.3.0.jar
+27-10-2026  06:32           619,159 spark-hive-thriftserver_2.13-4.3.0.jar
+27-10-2026  06:32           770,653 spark-hive_2.13-4.3.0.jar
+27-10-2026  06:32           674,210 spark-kubernetes_2.13-4.3.0.jar
+27-10-2026  06:32            87,278 spark-kvstore_2.13-4.3.0.jar
+27-10-2026  06:32            82,628 spark-launcher_2.13-4.3.0.jar
+27-10-2026  06:32           123,638 spark-mllib-local_2.13-4.3.0.jar
+27-10-2026  06:32         6,930,919 spark-mllib_2.13-4.3.0.jar
+27-10-2026  06:32         3,340,910 spark-network-common_2.13-4.3.0.jar
+27-10-2026  06:32           190,728 spark-network-shuffle_2.13-4.3.0.jar
+27-10-2026  06:32           882,489 spark-pipelines_2.13-4.3.0.jar
+27-10-2026  06:32            37,278 spark-repl_2.13-4.3.0.jar
+27-10-2026  06:32            38,171 spark-sketch_2.13-4.3.0.jar
+27-10-2026  06:32         3,336,183 spark-sql-api_2.13-4.3.0.jar
+27-10-2026  06:32        16,032,298 spark-sql_2.13-4.3.0.jar
+27-10-2026  06:32         1,186,036 spark-streaming_2.13-4.3.0.jar
+27-10-2026  06:32            15,597 spark-tags_2.13-4.3.0.jar
+27-10-2026  06:32           102,818 spark-udf-worker-core_2.13-4.3.0.jar
+27-10-2026  06:32           408,075 spark-udf-worker-proto_2.13-4.3.0.jar
+27-10-2026  06:32           148,740 spark-unsafe_2.13-4.3.0.jar
+27-10-2026  06:32            69,608 spark-variant_2.13-4.3.0.jar
+27-10-2026  06:32           387,511 spark-yarn_2.13-4.3.0.jar
+27-10-2026  06:32           109,070 spire-macros_2.13-0.18.0.jar
+27-10-2026  06:32             1,684 spire-platform_2.13-0.18.0.jar
+27-10-2026  06:32            29,142 spire-util_2.13-0.18.0.jar
+27-10-2026  06:32         7,676,808 spire_2.13-0.18.0.jar
+27-10-2026  06:32           236,660 ST4-4.0.4.jar
+27-10-2026  06:32            26,514 stax-api-1.0.1.jar
+27-10-2026  06:32           178,405 stream-2.9.8.jar
+27-10-2026  06:32            93,210 super-csv-2.2.0.jar
+27-10-2026  06:32           280,525 threeten-extra-1.8.0.jar
+27-10-2026  06:32         2,710,251 tink-1.20.0.jar
+27-10-2026  06:32            15,071 transaction-api-1.1.jar
+27-10-2026  06:32           447,005 univocity-parsers-2.9.1.jar
+27-10-2026  06:32           133,612 vertx-auth-common-4.5.26.jar
+27-10-2026  06:32         1,668,974 vertx-core-4.5.26.jar
+27-10-2026  06:32            35,005 vertx-uri-template-4.5.26.jar
+27-10-2026  06:32           116,139 vertx-web-client-4.5.26.jar
+27-10-2026  06:32            31,965 vertx-web-common-4.5.26.jar
+27-10-2026  06:32            10,109 volcano-client-7.6.1.jar
+27-10-2026  06:32           544,960 volcano-model-7.6.1.jar
+27-10-2026  06:32           269,761 xbean-asm9-shaded-4.30.jar
+27-10-2026  06:32           173,439 xmlschema-core-2.3.1.jar
+27-10-2026  06:32           168,792 xz-1.12.jar
+27-10-2026  06:32            37,188 zjsonpatch-7.6.1.jar
+27-10-2026  06:32         1,367,207 zookeeper-3.9.5.jar
+27-10-2026  06:32           260,263 zookeeper-jute-3.9.5.jar
+27-10-2026  06:32         7,400,645 zstd-jni-1.5.7-7.jar
+             279 File(s)    422,428,978 bytes
+               3 Dir(s)  346,579,083,264 bytes free
+
+C:\>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 PS C:\Users\2000209446> cd Downloads
 PS C:\Users\2000209446\Downloads> dir
 
