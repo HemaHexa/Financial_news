@@ -4,6 +4,65 @@ from bs4 import BeautifulSoup
 
 URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
 
+response = requests.get(
+    URL,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+article_body = soup.find(
+    "div",
+    class_="storycontent"
+)
+
+if article_body:
+    print("ARTICLE BODY FOUND!")
+
+    print("\n========== CHILD TAGS ==========")
+
+    for tag in article_body.find_all(True):
+        text = tag.get_text(" ", strip=True)
+
+        if text:
+            print(
+                "TAG:", tag.name,
+                "| CLASS:", tag.get("class"),
+                "| TEXT:", text[:300]
+            )
+
+    print("\n========== COMPLETE BODY TEXT ==========")
+
+    print(article_body.get_text(" ", strip=True))
+
+else:
+    print("Article body not found")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import requests
+from bs4 import BeautifulSoup
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
 headers = {"User-Agent": "Mozilla/5.0"}
 
 response = requests.get(URL, headers=headers, timeout=20)
