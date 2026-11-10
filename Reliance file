@@ -1,0 +1,51 @@
+
+import requests
+from bs4 import BeautifulSoup
+
+URLS = [
+    "https://www.business-standard.com/companies/news",
+    "https://www.business-standard.com/markets/news",
+    "https://www.business-standard.com/rss/markets-106.rss",
+]
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
+}
+
+for url in URLS:
+    print("\n" + "=" * 70)
+    print("Testing:", url)
+
+    try:
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=20
+        )
+
+        print("HTTP Status:", response.status_code)
+        print("Content Type:", response.headers.get("Content-Type"))
+        print("Response Size:", len(response.content), "bytes")
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        print("Page Title:", soup.title.get_text(strip=True) if soup.title else "Not found")
+
+        links = soup.find_all("a", href=True)
+
+        reliance_links = [
+            link for link in links
+            if "reliance" in link.get_text(" ", strip=True).lower()
+        ]
+
+        print("Reliance-related links:", len(reliance_links))
+
+        for link in reliance_links[:5]:
+            print(
+                "Headline:", link.get_text(" ", strip=True),
+                "| URL:", link["href"]
+            )
+
+    except requests.RequestException as error:
+        print("Request failed:", error)
+              
