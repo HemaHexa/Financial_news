@@ -1,0 +1,107 @@
+
+import feedparser
+import json
+import time
+import hashlib
+from datetime import datetime, timezone
+from kafka import KafkaProducer
+
+# Kafka configuration
+KAFKA_TOPIC = "raw-news-events"
+KAFKA_SERVER = "localhost:9092"
+
+# Business Standard Indian stock market RSS
+RSS_FEEDS = {
+    "Business Standard": "https://www.business-standard.com/rss/markets/stock-market-news-10618.rss"
+}
+
+# Create Kafka producer
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_SERVER,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8")
+)
+
+# Store processed news IDs to avoid duplicates
+SEEN_FILE = "seen_news.json"
+
+try:
+    with open(SEEN_FILE, "r", encoding="utf-8") as f:
+        seen_ids = set(json.load(f))
+except FileNotFoundError:
+    seen_ids = set()
+
+
+def collect_news():
+
+    for source, feed_url in RSS_FEEDS.items():
+
+        print(f"Checking {source}...")
+
+        feed = feedparser.parse(feed_url)
+
+        if feed.bozo and not feed.entries:
+            print(f"Feed error: {feed.bozo_exception}")
+            continue
+
+        for entry in feed.entries:
+
+            title = entry.get("title", "").strip()
+            link = entry.get("link", "")
+
+            if not title:
+                continue
+
+            news_id = entry.get("id") or link or title
+            news_hash = hashlib.sha256(
+                news_id.encode("utf-8")
+            ).hexdigest()
+
+            if news_hash in seen_ids:
+                continue
+
+            # Preserve RSS description HTML
+            raw_html = entry.get("summary", "")
+
+            news = {
+                "source": source,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "published": entry.get("published", ""),
+                "title": title,
+                "link": link,
+                "content_html": raw_html,
+                "news_id": news_hash
+            }
+
+            try:
+                producer.send(
+                    KAFKA_TOPIC,
+                    value=news
+                ).get(timeout=10)
+
+                seen_ids.add(news_hash)
+
+                with open(SEEN_FILE, "w", encoding="utf-8") as f:
+                    json.dump(list(seen_ids), f)
+
+                print(f"Sent: {title}")
+
+            except Exception as e:
+                print(f"Kafka sending error: {e}")
+
+
+if __name__ == "__main__":
+
+    print("Indian Financial News Producer Started")
+
+    try:
+        while True:
+            collect_news()
+            print("Waiting 60 seconds for new news...")
+            time.sleep(60)
+
+    except KeyboardInterrupt:
+        print("Stopping producer...")
+
+    finally:
+        producer.flush()
+        producer.close()
