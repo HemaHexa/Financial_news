@@ -1,3 +1,37 @@
+@'
+import pyarrow.parquet as pq
+import glob
+import json
+
+files = glob.glob("data/bronze/news_history/*.parquet")
+table = pq.read_table(files[0])
+
+print("\nTOTAL RECORDS:", table.num_rows)
+print("\n" + "=" * 110)
+print(f"{'NO.':<5} {'SOURCE':<20} {'HEADLINE':<65}")
+print("=" * 110)
+
+for i, row in enumerate(table.to_pylist()[:15], 1):
+    try:
+        news = json.loads(row["raw_json"])
+        source = str(news.get("source", "Unknown"))[:19]
+        headline = str(news.get("headline", "No headline"))[:64]
+        print(f"{i:<5} {source:<20} {headline:<65}")
+    except Exception:
+        print(f"{i:<5} Could not parse raw JSON")
+
+print("=" * 110)
+'@ | python -
+
+
+
+
+
+
+
+
+
+
 python -c "import pyarrow.parquet as pq, glob; files=glob.glob('data/bronze/news_history/*.parquet'); print('Files:', len(files)); t=pq.read_table(files[-1]); print('Columns:', t.column_names); print('Rows:', t.num_rows); print(t.to_pandas().head(5).to_string(index=False))"
 
 
