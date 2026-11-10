@@ -1,0 +1,35 @@
+
+import requests
+import feedparser
+
+URL = "https://www.business-standard.com/rss/markets-106.rss"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+response = requests.get(
+    URL,
+    headers=headers,
+    timeout=20
+)
+
+print("HTTP STATUS:", response.status_code)
+print("CONTENT TYPE:", response.headers.get("Content-Type"))
+print("RESPONSE SIZE:", len(response.content))
+
+print("\n========== RESPONSE PREVIEW ==========")
+print(response.text[:1000])
+
+feed = feedparser.parse(response.content)
+
+print("\n========== FEEDPARSER RESULT ==========")
+print("Bozo:", feed.bozo)
+print("Bozo exception:", feed.get("bozo_exception"))
+print("Feed title:", feed.feed.get("title"))
+print("Total entries:", len(feed.entries))
+
+for entry in feed.entries[:5]:
+    print("\nHeadline:", entry.get("title"))
+    print("Published:", entry.get("published"))
+    print("URL:", entry.get("link"))
