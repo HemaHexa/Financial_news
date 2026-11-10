@@ -1,6 +1,69 @@
 
 import requests
 from bs4 import BeautifulSoup
+from copy import copy
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+response = requests.get(
+    URL,
+    headers={"User-Agent": "Mozilla/5.0"},
+    timeout=20
+)
+response.raise_for_status()
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+body = soup.find("div", class_="storycontent")
+
+if not body:
+    print("Article body not found")
+
+else:
+    # Work on a copy so the original HTML stays unchanged
+    clean_body = copy(body)
+
+    # Remove unrelated content
+    unwanted_selectors = [
+        '[class*="latestnews"]',
+        '[class*="recommendation"]',
+        '[class*="alsoRead"]',
+        "style",
+        "script"
+    ]
+
+    for selector in unwanted_selectors:
+        for element in clean_body.select(selector):
+            element.decompose()
+
+    full_text = clean_body.get_text(" ", strip=True)
+
+    print("========== CLEAN ARTICLE TEXT ==========")
+    print(full_text)
+
+    print("\nTotal characters:", len(full_text))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import requests
+from bs4 import BeautifulSoup
 
 URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
 
