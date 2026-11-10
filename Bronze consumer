@@ -1,4 +1,129 @@
 
+import os
+import json
+import time
+from datetime import datetime, timezone
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+from kafka import KafkaConsumer
+
+# Configuration
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_TOPIC = "raw-news-events"
+CONSUMER_GROUP = "financial-news-bronze"
+
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+BRONZE_PATH = os.path.join(
+    PROJECT_DIR, "data", "bronze", "news_history"
+)
+
+os.makedirs(BRONZE_PATH, exist_ok=True)
+
+# Create Kafka consumer
+consumer = KafkaConsumer(
+    KAFKA_TOPIC,
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+    group_id=CONSUMER_GROUP,
+    auto_offset_reset="earliest",
+    enable_auto_commit=False
+)
+
+print("Connected to Kafka!")
+print("Topic:", KAFKA_TOPIC)
+print("Bronze output:", BRONZE_PATH)
+
+# Bronze schema: exactly six columns
+schema = pa.schema([
+    ("kafka_key", pa.string()),
+    ("raw_json", pa.string()),
+    ("topic", pa.string()),
+    ("partition", pa.int32()),
+    ("offset", pa.int64()),
+    ("kafka_ts", pa.timestamp("ms", tz="UTC"))
+])
+
+batch = []
+last_flush = time.time()
+
+def write_parquet(records):
+    if not records:
+        return
+
+    table = pa.Table.from_pylist(records, schema=schema)
+
+    filename = (
+        "news_"
+        + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
+        + ".parquet"
+    )
+
+    filepath = os.path.join(BRONZE_PATH, filename)
+
+    pq.write_table(table, filepath, compression="snappy")
+
+    print(f"Saved {len(records)} messages: {filename}")
+
+
+try:
+    print("Bronze consumer is running...")
+
+    while True:
+        messages = consumer.poll(
+            timeout_ms=1000,
+            max_records=500
+        )
+
+        for topic_partition, records in messages.items():
+            for message in records:
+                batch.append({
+                    "kafka_key": (
+                        message.key.decode("utf-8")
+                        if message.key else None
+                    ),
+                    "raw_json": message.value.decode("utf-8"),
+                    "topic": message.topic,
+                    "partition": message.partition,
+                    "offset": message.offset,
+                    "kafka_ts": (
+                        datetime.fromtimestamp(
+                            message.timestamp / 1000,
+                            tz=timezone.utc
+                        )
+                        if message.timestamp is not None
+                        else None
+                    )
+                })
+
+        # Flush every minute
+        if time.time() - last_flush >= 60:
+            if batch:
+                write_parquet(batch)
+                consumer.commit()
+                batch.clear()
+            else:
+                print("No new messages in this interval.")
+
+            last_flush = time.time()
+
+except KeyboardInterrupt:
+    print("Stopping Bronze consumer...")
+
+    if batch:
+        write_parquet(batch)
+        consumer.commit()
+        batch.clear()
+
+finally:
+    consumer.close()
+    print("Bronze consumer stopped.")
+
+
+
+
+
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
