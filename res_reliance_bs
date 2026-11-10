@@ -1,0 +1,162 @@
+(venv) PS C:\FinancePipeline\test> python bs_reliance_15day_scraper.py
+======================================================================
+BUSINESS STANDARD - RELIANCE 15-DAY SCRAPER
+======================================================================
+Current IST: 2026-11-10T16:44:37.740536+05:30
+15-day cutoff: 2026-10-26T16:44:37.740536+05:30
+
+Checking section: https://www.business-standard.com/companies/news
+New article links found: 25
+
+Checking section: https://www.business-standard.com/markets/news
+New article links found: 19
+
+TOTAL UNIQUE ARTICLE LINKS: 44
+
+========== SCRAPING ARTICLES ==========
+
+[1/44] Checking: Amazon eyes AI agents for 2 mn Indian sellers, targets 15 mn businesses
+Skipped: not a matching, dated article in range
+
+[2/44] Checking: 3 workers die of asphyxiation at Tata's iPhone parts factory in Tamil Nadu
+Skipped: not a matching, dated article in range
+
+[3/44] Checking: Blackstone set to become key investor in IIFL Finance with 15% stake
+Skipped: not a matching, dated article in range
+
+[4/44] Checking: Huang's grip on Nvidia may pose challenge to board's probe into his affair
+Skipped: not a matching, dated article in range
+
+[5/44] Checking: IndiQube plans to pilot data centres in office spaces amid client demand
+Skipped: not a matching, dated article in range
+
+[6/44] Checking: WTi Cabs targets ₹5K-7K cr annual revenue in 5 years: CEO Ashok Vashist
+Skipped: not a matching, dated article in range
+
+[7/44] Checking: SiriusXM names Tubi chief Anjali Sud as CEO, effective January 1, 2027
+Skipped: not a matching, dated article in range
+
+[8/44] Checking: Quest Global acquires US-based Tests Assured to boost wearables expertise
+Skipped: not a matching, dated article in range
+
+[9/44] Checking: Prestige Estates acquires Noida-based Allure Developers for ₹523.76 crore
+Skipped: not a matching, dated article in range
+
+[10/44] Checking: Reliance may struggle to repeat cola disruption in biscuits: Britannia CEO
+Skipped: not a matching, dated article in range
+
+[11/44] Checking: Tenneco India explores diversifying beyond auto sector, eyes M&A plans
+Skipped: not a matching, dated article in range
+
+[12/44] Checking: Sarvam appoints ex-Google Cloud India MD Sashikumar Sreedharan as president
+Skipped: not a matching, dated article in range
+
+[13/44] Checking: Jindal, Arvedi Group submit binding bids for Italy's former Ilva steelworks
+Skipped: not a matching, dated article in range
+
+[14/44] Checking: MakeMyTrip's India subsidiary receives Sebi approval to float IPO
+Skipped: not a matching, dated article in range
+
+[15/44] Checking: Employees in India value work breaks, but few make time for them
+Skipped: not a matching, dated article in range
+
+[16/44] Checking: L&T bags 'significant' order from Noida Metro for Aqua Line extension
+Skipped: not a matching, dated article in range
+
+[17/44] Checking: Morepen launches first US prescription generic, eyes further filings
+Skipped: not a matching, dated article in range
+
+[18/44] Checking: Suzlon Energy Share Price
+Skipped: not a matching, dated article in range
+
+[19/44] Checking: Adani Enterprises Share Price
+Skipped: not a matching, dated article in range
+
+[20/44] Checking: Adani Power Share Price
+Skipped: not a matching, dated article in range
+
+[21/44] Checking: IRFC Share Price
+Skipped: not a matching, dated article in range
+
+[22/44] Checking: Tata Motors PV Share price
+Skipped: not a matching, dated article in range
+
+[23/44] Checking: BHEL Share Price
+Skipped: not a matching, dated article in range
+
+[24/44] Checking: Dr Reddy Share Price
+Skipped: not a matching, dated article in range
+
+[25/44] Checking: Vodafone Idea Share Price
+Skipped: not a matching, dated article in range
+
+[26/44] Checking: Apollo Hospitals stock supported by expansion, value unlocking triggers
+Skipped: not a matching, dated article in range
+
+[27/44] Checking: World stocks rise as oil slips below $90 on hopes of US-Iran peace talks
+Skipped: not a matching, dated article in range
+
+[28/44] Checking: Bullish signals! GIFT Nifty jumps 1% as crude oil prices test $90/bbl
+Skipped: not a matching, dated article in range
+
+[29/44] Checking: Asian stocks rise amid falling oil prices on hopes of US-Iran talks
+Skipped: not a matching, dated article in range
+
+[30/44] Checking: Stock market holiday: NSE, BSE to remain closed for Diwali-Balipratipada
+Skipped: not a matching, dated article in range
+
+[31/44] Checking: Debt drives overseas fundraising by Indian companies to 7-year high
+Skipped: not a matching, dated article in range
+
+[32/44] Checking: Strong Q2, future prospects keep Street bullish on Tata Steel stock
+Skipped: not a matching, dated article in range
+
+[33/44] Checking: IFSCA may let researchers in GIFT City to launch model portfolios
+Skipped: not a matching, dated article in range
+
+[34/44] Checking: Jewellery stocks outshine Nifty as festive gold demand fuels optimism
+Skipped: not a matching, dated article in range
+
+[35/44] Checking: Brokerages feel sequential squeeze as closing auction session, curbs hit Q2
+Skipped: not a matching, dated article in range
+
+[36/44] Checking: Nvidia's shares slide as chip giant probes CEO Huang over spy claims
+Skipped: not a matching, dated article in range
+
+[37/44] Checking: Scaling up of projects to drive gains for Divi's Labs amid strong Q2 show
+Skipped: not a matching, dated article in range
+
+[38/44] Checking: HSBC upgrades Indian equities to 'overweight', cuts China to 'neutral'
+Skipped: not a matching, dated article in range
+
+[39/44] Checking: How to choose a foreign broker? Check the plumbing, not just the app
+Skipped: not a matching, dated article in range
+
+[40/44] Checking: Stock Market Close: Sensex ends volatile trade 107 pts higher, Nifty at 25,045; PSU Bank i
+Skipped: not a matching, dated article in range
+
+[41/44] Checking: Pharmacy retail stock Entero Healthcare zooms 33% in 1 week; hits new high
+Skipped: not a matching, dated article in range
+
+[42/44] Checking: Data Patterns shares zoom 9% post Q2 show, nearly double from Jan lows
+Skipped: not a matching, dated article in range
+
+[43/44] Checking: IRB Infra share price climbs 7% as toll collections boost Q2 earnings
+Skipped: not a matching, dated article in range
+
+[44/44] Checking: Ashok Leyland, Paytm down after 6-day rally; analyst flags positive charts
+Skipped: not a matching, dated article in range
+
+======================================================================
+SCRAPING COMPLETED
+======================================================================
+Article links discovered: 44
+Reliance articles in 15 days: 0
+Saved file: reliance_15day_articles.json
+(venv) PS C:\FinancePipeline\test> 
+
+
+
+
+
+
