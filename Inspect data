@@ -1,0 +1,39 @@
+
+import requests
+from bs4 import BeautifulSoup
+import json
+
+URL = "https://www.business-standard.com/companies/news/reliance-may-struggle-to-repeat-cola-disruption-in-biscuits-britannia-ceo-126110900953_1.html"
+
+headers = {"User-Agent": "Mozilla/5.0"}
+
+response = requests.get(URL, headers=headers, timeout=20)
+soup = BeautifulSoup(response.text, "html.parser")
+
+print("========== ARTICLE HTML ==========")
+
+article = soup.find("article")
+
+if article:
+    print(article.prettify()[:5000])
+
+print("\n========== JSON-LD DATA ==========")
+
+for script in soup.find_all("script", type="application/ld+json"):
+    try:
+        data = json.loads(script.string or script.get_text())
+        print(json.dumps(data, indent=2)[:6000])
+    except Exception:
+        print("Could not parse one JSON-LD block")
+
+print("\n========== SCRIPTS CONTAINING ARTICLE CONTENT ==========")
+
+for script in soup.find_all("script"):
+    content = script.string or script.get_text()
+
+    if content and any(
+        word in content.lower()
+        for word in ["articlebody", "article_body", "articlebody"]
+    ):
+        print(content[:3000])
+
